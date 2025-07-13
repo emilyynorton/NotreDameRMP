@@ -1,0 +1,108 @@
+/* NDpath - Notre Dame Path Class Search RMP Extension Styles */
+
+/* Tooltip styling */
+.rmp-tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  font-size: 14px;
+  max-width: 300px;
+  font-family: Arial, sans-serif;
+}
+
+/* Loading indicator */
+.loading-spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+  margin: 10px auto;
+}
+
+/* Tooltip content styling */
+.rmp-tooltip-content {
+  padding: 5px;
+}
+
+.rmp-tooltip h3 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.rmp-department {
+  color: #7f8c8d;
+  font-style: italic;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.rmp-rating {
+  margin: 10px 0;
+}
+
+.rmp-stars {
+  color: #f1c40f;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+.rmp-rating-value {
+  margin-left: 5px;
+  font-weight: bold;
+}
+
+.rmp-details {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 5px;
+}
+
+.rmp-details p {
+  margin: 5px 0;
+}
+
+.rmp-tooltip a {
+  color: #3498db;
+  text-decoration: none;
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.rmp-tooltip a:hover {
+  text-decoration: underline;
+}
+
+/* Debug button styling */
+#ndpath-debug-button {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+  padding: 5px 10px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#ndpath-debug-button:hover {
+  background-color: #2980b9;
+}
+
+/* Animation for the loading spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

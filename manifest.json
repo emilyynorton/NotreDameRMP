@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Notre Dame RMP Ratings",
+    "version": "1.0",
+    "description": "Adds RateMyProfessors ratings to Notre Dame's class search.",
+    "permissions": ["scripting", "activeTab", "tabs", "storage"],
+    "host_permissions": [
+      "https://www.ratemyprofessors.com/*",
+      "https://ratemyprofessors.com/*"
+    ],
+    "content_scripts": [
+      {
+        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*", "https://bxeregprod.oit.nd.edu/*"],
+        "js": ["content-bundle.js"],
+        "css": ["styles.css"]
+      }
+    ],
+    "web_accessible_resources": [
+      {
+        "resources": ["utils/*"],
+        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*", "https://bxeregprod.oit.nd.edu/*"]
+      }
+    ],
+    "background": {
+      "service_worker": "background.js",
+      "type": "module"
+    },
+  "action": {
+      "default_title": "Notre Dame RMP Ratings"
+    }
+  }
+  
