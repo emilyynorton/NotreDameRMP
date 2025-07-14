@@ -1,5 +1,8 @@
 import { ND_SCHOOL_ID, RMP_GRAPHQL_URL, AUTH_TOKEN } from './configure.js';
 
+// background.js
+// handles API requests
+
 // Utility functions for encoding/decoding school IDs
 /**
  * Check if RateMyProfessor GraphQL API is reachable
@@ -138,57 +141,73 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
         searchNameLower.split(' ').pop() : 
         searchNameLower;
     
+    // First filter for Notre Dame professors only
+    const notreDameProfessors = edges.filter(edge => {
+        const school = edge.node?.school;
+        return school && (
+            school.id === btoa('School-'.concat(ND_SCHOOL_ID)) || // Encoded Notre Dame school ID
+            (school.name && school.name.toLowerCase().includes('notre dame'))
+        );
+    });
+    
+    console.log(`🏫 Found ${notreDameProfessors.length} Notre Dame professors out of ${edges.length} results`);
+    
+    // Only use Notre Dame professors - do not fall back to other schools
+    const professorPool = notreDameProfessors;
+    
     // Try to find the professor in several ways, from most to least precise
     
     // 1. First try exact match on full name
-    for (const edge of edges) {
+    for (const edge of professorPool) {
         const prof = edge.node;
         const fullName = `${prof.firstName} ${prof.lastName}`.toLowerCase();
         
         if (fullName === searchNameLower) {
-            console.log(`✅ Found exact name match: ${prof.firstName} ${prof.lastName}`);
+            console.log(`✅ Found exact name match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
             return prof;
         }
     }
     
     // 2. Try checking if the search name is contained in the professor name
-    for (const edge of edges) {
+    for (const edge of professorPool) {
         const prof = edge.node;
         const fullName = `${prof.firstName} ${prof.lastName}`.toLowerCase();
         
         if (fullName.includes(searchNameLower) || searchNameLower.includes(fullName)) {
-            console.log(`✅ Found name inclusion match: ${prof.firstName} ${prof.lastName}`);
+            console.log(`✅ Found name inclusion match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
             return prof;
         }
     }
     
     // 3. Try just matching on last name (very common in Notre Dame class listings)
-    for (const edge of edges) {
+    for (const edge of professorPool) {
         const prof = edge.node;
         if (prof.lastName.toLowerCase() === searchLastName) {
-            console.log(`✅ Found last name exact match: ${prof.firstName} ${prof.lastName}`);
+            console.log(`✅ Found last name exact match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
             return prof;
         }
     }
     
     // 4. If no exact match and we have a target department, try matching with department
     if (targetDepartment) {
-        for (const edge of edges) {
+        for (const edge of professorPool) {
             const prof = edge.node;
             
             if (prof.department && prof.department.toLowerCase().includes(targetDepartment.toLowerCase())) {
-                console.log(`✅ Found department match: ${prof.firstName} ${prof.lastName} (${prof.department})`);
+                console.log(`✅ Found department match: ${prof.firstName} ${prof.lastName} (${prof.department}) at ${prof.school.name}`);
                 return prof;
             }
         }
     }
     
     // 5. Fall back to the first result if nothing better matches
-    if (edges.length > 0) {
-        const prof = edges[0].node;
-        console.log(`👉 Falling back to first result: ${prof.firstName} ${prof.lastName}`);
+    if (professorPool.length > 0) {
+        const prof = professorPool[0].node;
+        console.log(`👉 Falling back to first result: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
         return prof;
     }
+    
+    return null;
 }
 
 /**
@@ -197,13 +216,8 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
  * @returns {Promise} Promise resolving to professor data with rating
  */
 const searchProfessor = async (professorName, schoolID, targetDepartment = null) => {
-    console.log(`🔍 API Request: Searching for professor "${professorName}" at school ID ${schoolID}`);
-    // Log all API parameters for debugging
-    console.log('🔧 API Debug Info:', {
-        url: RMP_GRAPHQL_URL,
-        authToken: AUTH_TOKEN ? AUTH_TOKEN.substring(0, 10) + '...' : 'Missing',
-        schoolId: schoolID
-    });
+    console.log(`API Request: Searching for professor "${professorName}" at school ID ${schoolID}`);
+    // data pulled from Rate My Professor
     const query = `query NewSearchTeachersQuery(
     $query: TeacherSearchQuery!) {
         newSearch {
@@ -260,12 +274,11 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
         }
     }`;
     
-    // Prepare the variables
+    // double check name format - possibly redundant but more robust
     const convertedName = convertProfessorName(professorName);
     console.log(`🔄 Converting "${professorName}" to "${convertedName}" for API request`);
     
-    // Fix the variables format to match what RateMyProfessors API expects
-    // This is the correct format based on the GraphQL API requirements
+    // format for GraphQL API requirements
     const variables = {
         query: {
             text: convertedName,
@@ -275,8 +288,6 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
         }
     };
     
-    console.log('🔍 Using search variables:', variables);
-    
     try {
         // Log request details
         console.log(`📡 Sending GraphQL request to ${RMP_GRAPHQL_URL}`);
@@ -285,7 +296,7 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
             variables: variables
         }));
         
-        // Make the API call
+        // make API call - POSTing query and variables as JSON
         const response = await fetch(RMP_GRAPHQL_URL, {
             method: 'POST',
             headers: {
@@ -335,9 +346,20 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
             return null;
         }
         
-        // Find best match
+        // filter found professors
         const bestMatch = filterProfessorResults(edges, convertedName, targetDepartment);
-        console.log(`📋 Best match found:`, bestMatch);
+        
+        // if no Notre Dame professor was found, indicate no ratings available
+        if (!bestMatch) {
+            console.log(`❌ No Notre Dame professor found for: ${professorName}`);
+            return {
+                notFound: true,
+                message: "No ratings on Rate My Professor",
+                searchTerm: professorName,
+                schoolId: ND_SCHOOL_ID
+            };
+        }
+        
         return bestMatch;
         
     } catch (error) {
@@ -345,9 +367,6 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
         return null;
     }
 };
-
-
-// This duplicate listener has been merged with the main onMessage listener above
 
 /**
  * Process all professors by searching RateMyProfessor for each
@@ -369,22 +388,37 @@ async function processProfessorsWithRatings(professors) {
     const result = await searchProfessor(professorName, encodeToBase64(ND_SCHOOL_ID));
     
     if (result) {
-      // If found, add the result with the original professor data
-      results.push({
-        ...professor,
-        rmpData: result,
-        rating: result.avgRatingRounded || null,
-        numRatings: result.numRatings || 0,
-        difficulty: result.avgDifficultyRounded || null,
-        wouldTakeAgain: result.wouldTakeAgainPercentRounded || null,
-        found: true
-      });
+      // Check if this is a "not found at Notre Dame" result
+      if (result.notFound) {
+        // Notre Dame professor not found, add with specific not found status
+        results.push({
+          ...professor,
+          rating: null,
+          found: false,
+          notFoundAtNotreDame: true,
+          message: result.message || "No ratings on Rate My Professor",
+          searchTerm: professorName
+        });
+      } else {
+        // Notre Dame professor found with ratings
+        results.push({
+          ...professor,
+          rmpData: result,
+          rating: result.avgRatingRounded || null,
+          numRatings: result.numRatings || 0,
+          difficulty: result.avgDifficultyRounded || null,
+          wouldTakeAgain: result.wouldTakeAgainPercentRounded || null,
+          found: true,
+          schoolName: result.school?.name || "Notre Dame"
+        });
+      }
     } else {
-      // If not found, add the original professor with not found status
+      // API error or other issue
       results.push({
         ...professor,
         rating: null,
         found: false,
+        message: "Error retrieving professor data",
         searchTerm: professorName
       });
     }
@@ -459,9 +493,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     searchProfessor(professorName, finalSchoolId, department)
       .then(professorData => {
         if (professorData) {
-          console.log(`✅ Sending successful response for ${professorName}`);
-          console.log('📊 Professor data found:', professorData);
-          sendResponse({ success: true, professor: professorData });
+          // Check if this is a "not found" response
+          if (professorData.notFound) {
+            console.log(`⚠️ Notre Dame professor not found: ${professorName}`);
+            sendResponse({ 
+              success: false, 
+              error: professorData.message || "No ratings on Rate My Professor",
+              notFoundAtNotreDame: true,
+              searchTerm: professorName,
+              convertedName: convertProfessorName(professorName),
+              schoolID: finalSchoolId
+            });
+          } else {
+            console.log(`✅ Sending successful response for ${professorName}`);
+            console.log('📄 Professor data found:', professorData);
+            sendResponse({ success: true, professor: professorData });
+          }
         } else {
           console.log(`⚠️ Professor not found: ${professorName}`);
           sendResponse({ 

@@ -1,5 +1,6 @@
 // content-bundle.js
-// This is a bundled version of our content script with all imports included
+// bundled version of content script with imports included
+// to be injected into chrome webpage
 
 // ==== BEGIN extractors.js ====
 // Functions to extract professor names from various HTML structures
@@ -13,11 +14,39 @@ function extractFromResultFlex() {
   const instructorSpans = document.querySelectorAll('span.result__flex--9.text--right');
   
   instructorSpans.forEach(span => {
+    // Case 1: Regular format with "Instructor:" in the text content
     if (span.textContent.includes('Instructor:')) {
       const instructorText = span.textContent.trim();
       const name = instructorText.substring(instructorText.indexOf('Instructor:') + 'Instructor:'.length).trim();
       if (name && name !== 'TBD' && name !== 'Staff' && name !== 'TBA') {
         professorNames.add(name);
+      }
+    }
+    
+    // Case 2: "Instructor:" in sr-only span with professor name as text node
+    const srOnlySpan = span.querySelector('.sr-only');
+    if (srOnlySpan && srOnlySpan.textContent.includes('Instructor:')) {
+      // Extract all text nodes that follow the sr-only span
+      let professorName = '';
+      let foundSrOnly = false;
+      
+      // Loop through all child nodes
+      for (const node of span.childNodes) {
+        if (foundSrOnly && node.nodeType === Node.TEXT_NODE) {
+          professorName += node.textContent;
+        }
+        
+        if (node === srOnlySpan) {
+          foundSrOnly = true;
+        }
+      }
+      
+      // Clean up the extracted name
+      professorName = professorName.trim();
+      professorName = professorName.replace(/^"\s*/, '').replace(/\s*"$/, ''); // Remove quotes if present
+      
+      if (professorName && professorName !== 'TBD' && professorName !== 'Staff' && professorName !== 'TBA') {
+        professorNames.add(professorName);
       }
     }
   });
@@ -62,6 +91,86 @@ function extractFromCalendarViewing() {
 }
 
 /**
+ * Extracts professor names from divs with class "course-section-instr"
+ * @returns {Set} Set of professor names
+ */
+function extractFromCourseSectionInstr() {
+  const professorNames = new Set();
+  const courseSectionInstrDivs = document.querySelectorAll('div.course-section-instr');
+  
+  courseSectionInstrDivs.forEach(div => {
+    // Look for the header text span
+    const headerTextSpan = div.querySelector('.header-text');
+    if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
+      // Extract all text nodes that follow the header-text span
+      let professorName = '';
+      let foundHeaderSpan = false;
+      
+      // Loop through all child nodes
+      for (const node of div.childNodes) {
+        if (foundHeaderSpan && node.nodeType === Node.TEXT_NODE) {
+          professorName += node.textContent;
+        }
+        
+        if (node === headerTextSpan) {
+          foundHeaderSpan = true;
+        }
+      }
+      
+      // Clean up the extracted name
+      professorName = professorName.trim();
+      professorName = professorName.replace(/^"|"$/g, ''); // Remove quotes if present
+      
+      if (professorName && professorName !== 'TBD' && professorName !== 'Staff' && professorName !== 'TBA') {
+        professorNames.add(professorName);
+      }
+    }
+  });
+  
+  return professorNames;
+}
+
+/**
+ * Extracts professor names from divs with class "course-section-instructorresult-html"
+ * @returns {Set} Set of professor names
+ */
+function extractFromCourseSectionInstructorResult() {
+  const professorNames = new Set();
+  const instructorResultDivs = document.querySelectorAll('div.course-section-instructorresult-html');
+  
+  instructorResultDivs.forEach(div => {
+    // Look for the header text span
+    const headerTextSpan = div.querySelector('.header-text');
+    if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
+      // Extract all text nodes that follow the header-text span
+      let professorName = '';
+      let foundHeaderSpan = false;
+      
+      // Loop through all child nodes
+      for (const node of div.childNodes) {
+        if (foundHeaderSpan && node.nodeType === Node.TEXT_NODE) {
+          professorName += node.textContent;
+        }
+        
+        if (node === headerTextSpan) {
+          foundHeaderSpan = true;
+        }
+      }
+      
+      // Clean up the extracted name
+      professorName = professorName.trim();
+      professorName = professorName.replace(/^"|"$/g, ''); // Remove quotes if present
+      
+      if (professorName && professorName !== 'TBD' && professorName !== 'Staff' && professorName !== 'TBA') {
+        professorNames.add(professorName);
+      }
+    }
+  });
+  
+  return professorNames;
+}
+
+/**
  * Extracts all professor names from all possible HTML structures
  * @returns {Array} Array of professor names
  */
@@ -72,11 +181,15 @@ function extractAllProfessorNames() {
   const fromResultFlex = extractFromResultFlex();
   const fromInstructorDetail = extractFromInstructorDetail();
   const fromCalendarViewing = extractFromCalendarViewing();
+  const fromCourseSectionInstr = extractFromCourseSectionInstr();
+  const fromCourseSectionInstructorResult = extractFromCourseSectionInstructorResult();
   
   // Add all names to the combined set
   fromResultFlex.forEach(name => professorNames.add(name));
   fromInstructorDetail.forEach(name => professorNames.add(name));
   fromCalendarViewing.forEach(name => professorNames.add(name));
+  fromCourseSectionInstr.forEach(name => professorNames.add(name));
+  fromCourseSectionInstructorResult.forEach(name => professorNames.add(name));
   
   return Array.from(professorNames);
 }
@@ -260,6 +373,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 let tooltip = null;
 let professorData = {};
 let currentHoveredElement = null;
+let tooltipHovered = false;
 
 // Initialize tooltip system
 function setupTooltips(professors = null) {
@@ -281,6 +395,17 @@ function setupTooltips(professors = null) {
     tooltip.className = 'rmp-tooltip';
     tooltip.style.display = 'none';
     document.body.appendChild(tooltip);
+    
+    // Add mouse enter/leave event listeners to the tooltip
+    tooltip.addEventListener('mouseenter', () => {
+      tooltipHovered = true;
+    });
+    
+    tooltip.addEventListener('mouseleave', () => {
+      tooltipHovered = false;
+      tooltip.style.display = 'none';
+      currentHoveredElement = null; // Clear the current hovered element
+    });
     
     // Add a small indicator that the extension is active
     const indicator = document.createElement('div');
@@ -317,10 +442,23 @@ function setupTooltips(professors = null) {
 function attachTooltipListeners() {
   // Result Flex professor names
   document.querySelectorAll('span.result__flex--9.text--right').forEach(span => {
-    if (span.textContent.includes('Instructor:') && !span.hasAttribute('data-rmp-attached')) {
+    // Force attach to ALL result__flex--9 elements with Instructor text regardless of previous attachment
+    if (span.textContent.includes('Instructor:')) {
+      // Add a debug class to track which elements we've processed
+      if (span.hasAttribute('data-rmp-attached')) {
+        span.setAttribute('data-rmp-reattached', 'true');
+      }
+      
+      // Always set these attributes and event listeners to ensure consistency
       span.setAttribute('data-rmp-attached', 'true');
       span.style.cursor = 'help';
       span.classList.add('rmp-professor-name');
+      
+      // Remove existing event listeners to prevent duplicates
+      span.removeEventListener('mouseenter', handleProfessorHover);
+      span.removeEventListener('mouseleave', handleProfessorLeave);
+      
+      // Add new event listeners
       span.addEventListener('mouseenter', handleProfessorHover);
       span.addEventListener('mouseleave', handleProfessorLeave);
     }
@@ -349,6 +487,78 @@ function attachTooltipListeners() {
       div.addEventListener('mouseleave', handleProfessorLeave);
     }
   });
+  
+  // Course Section Instructor names
+  document.querySelectorAll('div.course-section-instr').forEach(div => {
+    if (!div.hasAttribute('data-rmp-attached')) {
+      const headerTextSpan = div.querySelector('.header-text');
+      if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
+        // Extract text nodes to check if there's a valid professor name
+        let hasValidName = false;
+        for (const node of div.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() && 
+              !['TBD', 'Staff', 'TBA'].includes(node.textContent.trim())) {
+            hasValidName = true;
+            break;
+          }
+        }
+        
+        if (hasValidName) {
+          div.setAttribute('data-rmp-attached', 'true');
+          div.style.cursor = 'help';
+          div.classList.add('rmp-professor-name');
+          div.addEventListener('mouseenter', handleProfessorHover);
+          div.addEventListener('mouseleave', handleProfessorLeave);
+        }
+      }
+    }
+  });
+  
+  // Course Section Instructor Result HTML names
+  document.querySelectorAll('div.course-section-instructorresult-html').forEach(div => {
+    // Force attach to ALL course-section-instructorresult-html elements regardless of previous attachment
+    // This ensures we don't miss any elements due to timing or DOM updates
+    const headerTextSpan = div.querySelector('.header-text');
+    if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
+      // Extract text nodes to check if there's a valid professor name
+      let hasValidName = false;
+      let professorName = '';
+      
+      // Loop through all child nodes to verify there's a valid name
+      for (const node of div.childNodes) {
+        if (node !== headerTextSpan && node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent.trim();
+          if (text && !['TBD', 'Staff', 'TBA'].includes(text)) {
+            hasValidName = true;
+            professorName += text;
+          }
+        }
+      }
+      
+      // Clean up and verify the name
+      professorName = professorName.trim().replace(/^"|"$/g, '');
+      
+      if (hasValidName && professorName) {
+        // Add a debug class to track which elements we've processed
+        if (div.hasAttribute('data-rmp-attached')) {
+          div.setAttribute('data-rmp-reattached', 'true');
+        }
+        
+        // Always set these attributes and event listeners to ensure consistency
+        div.setAttribute('data-rmp-attached', 'true');
+        div.style.cursor = 'help';
+        div.classList.add('rmp-professor-name');
+        
+        // Remove existing event listeners to prevent duplicates
+        div.removeEventListener('mouseenter', handleProfessorHover);
+        div.removeEventListener('mouseleave', handleProfessorLeave);
+        
+        // Add new event listeners
+        div.addEventListener('mouseenter', handleProfessorHover);
+        div.addEventListener('mouseleave', handleProfessorLeave);
+      }
+    }
+  });
 }
 
 // Handle mouse enter on professor name
@@ -359,10 +569,80 @@ function handleProfessorHover(event) {
   
   // Extract professor name
   let professorName;
+  
   if (element.classList.contains('result__flex--9')) {
-    const text = element.textContent.trim();
-    professorName = text.substring(text.indexOf('Instructor:') + 'Instructor:'.length).trim();
+    // More aggressive extraction for result__flex--9 elements
+    console.log('Processing result__flex--9 element:', element.outerHTML);
+    
+    // First check if this has an sr-only span
+    const srOnlySpan = element.querySelector('.sr-only');
+    if (srOnlySpan && srOnlySpan.textContent.includes('Instructor:')) {
+      console.log('Found sr-only span with Instructor text');
+      
+      // Extract all text from this element that is NOT in the sr-only span
+      let name = '';
+      let extractedFromNode = false;
+      
+      // Clone element content to avoid DOM manipulation issues
+      const elementClone = element.cloneNode(true);
+      
+      // First remove the sr-only span from our clone to make extraction cleaner
+      const cloneSrOnly = elementClone.querySelector('.sr-only');
+      if (cloneSrOnly) cloneSrOnly.remove();
+      
+      // Now extract text from the remaining content
+      name = elementClone.textContent.trim();
+      extractedFromNode = true;
+      
+      // If we failed to extract from nodes, fall back to using substring
+      if (!extractedFromNode || !name) {
+        const fullText = element.textContent.trim();
+        name = fullText.substring(fullText.indexOf('Instructor:') + 'Instructor:'.length).trim();
+        console.log('Used fallback extraction, got:', name);
+      }
+      
+      // Clean up the extracted name
+      professorName = name.trim();
+      professorName = professorName.replace(/^"\s*/, '').replace(/\s*"$/, ''); // Remove quotes if present
+      console.log('Extracted professor name:', professorName);
+    } else {
+      // Regular case: Instructor: text is part of the element's text content
+      const text = element.textContent.trim();
+      console.log('Processing regular result__flex--9, text content:', text);
+      if (text.includes('Instructor:')) {
+        professorName = text.substring(text.indexOf('Instructor:') + 'Instructor:'.length).trim();
+      } else {
+        professorName = text;
+      }
+      console.log('Extracted professor name:', professorName);
+    }
+  } else if (element.classList.contains('course-section-instr') || element.classList.contains('course-section-instructorresult-html')) {
+    // Handle course-section-instr and course-section-instructorresult-html elements
+    const headerTextSpan = element.querySelector('.header-text');
+    if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
+      // Extract all text nodes that follow the header-text span
+      let name = '';
+      let foundHeaderSpan = false;
+      
+      // Loop through all child nodes
+      for (const node of element.childNodes) {
+        if (foundHeaderSpan && node.nodeType === Node.TEXT_NODE) {
+          name += node.textContent;
+        }
+        
+        if (node === headerTextSpan) {
+          foundHeaderSpan = true;
+        }
+      }
+      
+      // Clean up the extracted name
+      professorName = name.trim();
+      professorName = professorName.replace(/^"\s*/, '').replace(/\s*"$/, ''); // Remove quotes if present
+    } else {
+      professorName = element.textContent.trim();
+    }
   } else {
+    // Default case for other element types
     professorName = element.textContent.trim();
   }
   
@@ -566,19 +846,42 @@ function handleProfessorHover(event) {
 
 // Handle mouse leave from professor name
 function handleProfessorLeave() {
-  currentHoveredElement = null;
-  tooltip.style.display = 'none';
+  // Instead of hiding immediately, we'll wait to see if mouse enters the tooltip
+  setTimeout(() => {
+    if (!tooltipHovered) {
+      tooltip.style.display = 'none';
+      currentHoveredElement = null; // Clear the current hovered element
+    }
+  }, 200); // Slightly longer timeout for better user experience
 }
 
-// Helper function to generate star rating display
+// Helper function to generate star rating display using Font Awesome icons
 function getRatingStars(rating) {
-  if (!rating) return '☆☆☆☆☆';
+  if (!rating) return '<span class="stars"><i class="fa fa-star-o"></i><i class="fa fa-star-o"></i><i class="fa fa-star-o"></i><i class="fa fa-star-o"></i><i class="fa fa-star-o"></i></span>';
   
   const fullStars = Math.floor(rating);
   const halfStar = rating % 1 >= 0.5 ? 1 : 0;
   const emptyStars = 5 - fullStars - halfStar;
   
-  return '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(emptyStars);
+  let starsHtml = '<span class="stars">';
+  
+  // Add full stars
+  for (let i = 0; i < fullStars; i++) {
+    starsHtml += '<i class="fa fa-star"></i>';
+  }
+  
+  // Add half star if needed
+  if (halfStar) {
+    starsHtml += '<i class="fa fa-star-half-o"></i>';
+  }
+  
+  // Add empty stars
+  for (let i = 0; i < emptyStars; i++) {
+    starsHtml += '<i class="fa fa-star-o"></i>';
+  }
+  
+  starsHtml += '</span>';
+  return starsHtml;
 }
 
 // Setup tooltips on page load
@@ -595,8 +898,63 @@ const tooltipObserver = new MutationObserver(mutations => {
   }
   
   if (shouldCheck) {
-    attachTooltipListeners();
+    // Add a small delay to ensure the DOM is fully updated
+    setTimeout(() => {
+      // First run the regular attachment
+      attachTooltipListeners();
+      
+      console.log('Performing extra checks for missed elements...');
+      
+      // Extra check for result__flex--9 elements with Instructor text
+      document.querySelectorAll('span.result__flex--9.text--right').forEach(span => {
+        if (span.textContent.includes('Instructor:') && !span.hasAttribute('data-rmp-attached')) {
+          console.log('Found missed result__flex--9 element, attaching listeners');
+          span.setAttribute('data-rmp-missed', 'true');
+          span.style.cursor = 'help';
+          span.classList.add('rmp-professor-name');
+          span.addEventListener('mouseenter', handleProfessorHover);
+          span.addEventListener('mouseleave', handleProfessorLeave);
+        }
+      });
+      
+      // Extra check for course-section-instructorresult-html elements
+      document.querySelectorAll('div.course-section-instructorresult-html:not([data-rmp-attached])').forEach(div => {
+        console.log('Found missed course-section-instructorresult-html element, attaching listeners');
+        div.setAttribute('data-rmp-missed', 'true');
+        div.style.cursor = 'help';
+        div.classList.add('rmp-professor-name');
+        div.addEventListener('mouseenter', handleProfessorHover);
+        div.addEventListener('mouseleave', handleProfessorLeave);
+      });
+      
+      // Force-reprocess all spans with rmp-professor-name class to ensure they have working listeners
+      document.querySelectorAll('.rmp-professor-name').forEach(el => {
+        // Ensure all elements have event listeners by removing and re-adding them
+        el.removeEventListener('mouseenter', handleProfessorHover);
+        el.removeEventListener('mouseleave', handleProfessorLeave);
+        el.addEventListener('mouseenter', handleProfessorHover);
+        el.addEventListener('mouseleave', handleProfessorLeave);
+        el.setAttribute('data-rmp-reprocessed', 'true');
+      });
+      
+    }, 100); // 100ms delay to allow DOM to settle
   }
 });
 
-tooltipObserver.observe(document.body, { childList: true, subtree: true });
+// Immediately apply attachment to ensure all current elements are processed
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(attachTooltipListeners, 500);
+});
+
+// Process the page immediately in case DOMContentLoaded already fired
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(attachTooltipListeners, 100);
+}
+
+// More aggressive observer configuration
+tooltipObserver.observe(document.body, { 
+  childList: true, 
+  subtree: true,
+  attributes: true, 
+  attributeFilter: ['class', 'data-rmp-attached'] 
+});

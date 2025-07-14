@@ -1,5 +1,6 @@
 // content.js
-// Main content script that runs on Notre Dame class search pages
+// handles professor name extraction and formatting
+// passes them to background script
 
 // Import our utility modules
 import { extractAllProfessorNames } from './utils/extractors.js';

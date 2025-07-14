@@ -1,5 +1,8 @@
 /* NDpath - Notre Dame Path Class Search RMP Extension Styles */
 
+/* Import Font Awesome for star icons */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
 /* Tooltip styling */
 .rmp-tooltip {
   position: absolute;
@@ -47,6 +50,26 @@
 
 .rmp-rating {
   margin: 10px 0;
+}
+
+/* Star Rating Styles */
+.stars {
+  display: inline-block;
+}
+
+.stars i {
+  color: #f8ce0b; /* Gold star color */
+  margin-right: 2px;
+
+}
+
+.stars .fa-star-o {
+  color: #ddd; /* Empty star color */
+}
+
+.rmp-rating-value {
+  margin-left: 5px;
+  font-weight: bold;
 }
 
 .rmp-stars {
