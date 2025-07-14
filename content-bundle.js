@@ -806,8 +806,12 @@ function handleProfessorHover(event) {
       }
     } else {
       // We know this professor doesn't have ratings
-      // If we have a processed name from the backend, use it; otherwise use the extracted name
-      const displayName = professor.fullName || professorName;
+      // Always use the preferred name format from the processed data if available
+      const firstName = professor.rmpFirstName || (professor.firstName || '');
+      const lastName = professor.rmpLastName || (professor.lastName || '');
+      // Try to construct the best possible name
+      const displayName = firstName && lastName ? `${firstName} ${lastName}` : 
+                         (professor.rmpFullName || professor.fullName || professorName);
       tooltip.innerHTML = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
           <h3 style="margin:0; font-size:16px;">${displayName}</h3>
@@ -822,6 +826,7 @@ function handleProfessorHover(event) {
     tooltip.innerHTML = `
       <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
         <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+        <p style="margin:4px 0 0 0; color:#666; font-size:12px;">Looking up official name...</p>
       </div>
       <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
         <div class="loading-spinner"></div>
@@ -918,15 +923,19 @@ function handleProfessorHover(event) {
       
         if (response && response.success) {
           const profData = response.professor;
-          // Create a standardized professor object
+          // Create a standardized professor object with RateMyProfessor name explicitly stored
           const prof = {
-            fullName: professorName,
+            fullName: professorName,  // Original name from website
             rmpData: profData,
+            // Store RateMyProfessor name components separately for consistent display
+            rmpFirstName: profData.firstName || '',
+            rmpLastName: profData.lastName || '',
+            rmpFullName: profData.firstName && profData.lastName ? `${profData.firstName} ${profData.lastName}` : '',
             rating: profData.avgRatingRounded || null,
             numRatings: profData.numRatings || 0,
-          difficulty: profData.avgDifficultyRounded || null,
-          wouldTakeAgain: profData.wouldTakeAgainPercentRounded || null,
-          found: true
+            difficulty: profData.avgDifficultyRounded || null,
+            wouldTakeAgain: profData.wouldTakeAgainPercentRounded || null,
+            found: true
         };
         
         // Save to our cache
@@ -1071,9 +1080,11 @@ function handleProfessorHover(event) {
         }
       } else {
         // Not found on RMP
+        // Get name from the response if available, otherwise use the website name
+        const displayName = response.convertedName || professorName;
         tooltip.innerHTML = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+            <h3 style="margin:0; font-size:16px;">${displayName}</h3>
           </div>
           <div class="tooltip-body">
             <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>

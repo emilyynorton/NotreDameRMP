@@ -209,12 +209,10 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
         }
     }
     
-    // 5. Fall back to the first result if nothing better matches
-    if (professorPool.length > 0) {
-        const prof = professorPool[0].node;
-        console.log(`👉 Falling back to first result: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
-        return prof;
-    }
+    // Don't fall back to first result if no match is found - explicitly return null
+    // to indicate that no matching professor was found
+    console.log('❌ No professor with matching last name and first initial found.');
+    return null;
     
     return null;
 }
