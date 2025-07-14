@@ -665,11 +665,10 @@ function handleProfessorHover(event) {
       // Create a unique ID for this professor
       const professorId = `prof_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Get professor details - prioritize RateMyProfessor name
-      // For the found professor, construct the full name from firstName and lastName in the RMP data
+      // Always use RateMyProfessor name when available
       const fullName = (professor.rmpData && professor.rmpData.firstName && professor.rmpData.lastName) ? 
-                       `${professor.rmpData.firstName} ${professor.rmpData.lastName}` : 
-                       (professor.fullName || professorName);
+                     `${professor.rmpData.firstName} ${professor.rmpData.lastName}` : 
+                     professorName;
       const department = professor.rmpData.department || 'N/A';
       const avgRating = professor.rating ? professor.rating.toFixed(1) : 'N/A';
       const numRatings = professor.numRatings || 0;
@@ -806,12 +805,12 @@ function handleProfessorHover(event) {
       }
     } else {
       // We know this professor doesn't have ratings
-      // Always use the preferred name format from the processed data if available
+      // Always prioritize RateMyProfessor name format when available
       const firstName = professor.rmpFirstName || (professor.firstName || '');
       const lastName = professor.rmpLastName || (professor.lastName || '');
-      // Try to construct the best possible name
+      // Try to construct the best possible name, prioritizing RMP name
       const displayName = firstName && lastName ? `${firstName} ${lastName}` : 
-                         (professor.rmpFullName || professor.fullName || professorName);
+                         (professor.rmpFullName || professorName);
       tooltip.innerHTML = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
           <h3 style="margin:0; font-size:16px;">${displayName}</h3>
@@ -825,8 +824,8 @@ function handleProfessorHover(event) {
     // We don't have data yet, show loading and request it
     tooltip.innerHTML = `
       <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-        <h3 style="margin:0; font-size:16px;">${professorName}</h3>
-        <p style="margin:4px 0 0 0; color:#666; font-size:12px;">Looking up official name...</p>
+            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+            <p style="margin:4px 0 0 0; color:#666; font-size:12px;">Looking up official name...</p>
       </div>
       <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
         <div class="loading-spinner"></div>
@@ -1038,7 +1037,7 @@ function handleProfessorHover(event) {
         
         tooltip.innerHTML = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <h3 style="margin:0; font-size:16px;">${prof.fullName} 
+            <h3 style="margin:0; font-size:16px;">${(prof.rmpData && prof.rmpData.firstName && prof.rmpData.lastName) ? `${prof.rmpData.firstName} ${prof.rmpData.lastName}` : prof.fullName} 
               <span style="display:inline-block; background-color:${getRatingColor(prof.rating)}; color:white; padding:3px 6px; border-radius:3px; font-size:12px; margin-left:5px;">${prof.rating ? prof.rating.toFixed(1) : 'N/A'}</span>
             </h3>
             <p style="margin:4px 0 0 0; color:#666;">${prof.rmpData.department || 'N/A'}</p>
@@ -1084,7 +1083,7 @@ function handleProfessorHover(event) {
         const displayName = response.convertedName || professorName;
         tooltip.innerHTML = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <h3 style="margin:0; font-size:16px;">${displayName}</h3>
+            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
           </div>
           <div class="tooltip-body">
             <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>
@@ -1094,6 +1093,8 @@ function handleProfessorHover(event) {
         // Save this negative result
         const notFoundProf = {
           fullName: professorName,
+          // If we have a converted name from the API, save it
+          rmpFullName: response.convertedName || null,
           found: false
         };
         
