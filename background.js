@@ -108,9 +108,8 @@ function convertProfessorName(name) {
     } 
     // Handle initial format like "J. Smith"
     else if (name.match(/^[A-Z]\.\s+[A-Za-z]+/)) {
-        // Since we only have initial, just return the last name for better search
-        const lastName = name.split('.').pop().trim();
-        return lastName;
+        // return last name and first initial for matching
+        return name.replace('.', '').trim();
     }
     
     // Already in correct format or other format we can't handle specifically
