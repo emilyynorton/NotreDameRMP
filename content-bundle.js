@@ -662,21 +662,145 @@ function handleProfessorHover(event) {
     const professor = professorData[professorName];
     
     if (professor.found) {
-      // Show tooltip with existing data
+      // Create a unique ID for this professor
+      const professorId = `prof_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Get professor details
+      const fullName = professor.fullName || professorName;
+      const department = professor.rmpData.department || 'N/A';
+      const avgRating = professor.rating ? professor.rating.toFixed(1) : 'N/A';
+      const numRatings = professor.numRatings || 0;
+      const wouldTakeAgain = professor.wouldTakeAgain ? `${professor.wouldTakeAgain}%` : 'N/A';
+      const avgDifficulty = professor.difficulty ? professor.difficulty.toFixed(1) : 'N/A';
+      const rmpUrl = professor.rmpData.legacyId ? 
+        `https://www.ratemyprofessors.com/professor/${professor.rmpData.legacyId}` : null;
+      
+      // Get reviews to display
+      let reviewsHTML = '<p>No ratings available</p>';
+      
+      // Try to find reviews to display (up to 3)
+      const ratings = [];
+      
+      // Add the most useful rating if available
+      if (professor.rmpData.mostUsefulRating) {
+        ratings.push({
+          ...professor.rmpData.mostUsefulRating,
+          isMostUseful: true
+        });
+      }
+      
+      // Add additional ratings if available
+      if (professor.rmpData.ratings && professor.rmpData.ratings.edges) {
+        // Add up to 2 more ratings (we already have the most useful one)
+        professor.rmpData.ratings.edges.forEach(edge => {
+          // Make sure we don't add the same rating twice if it's already the most useful one
+          if (edge.node && 
+              (!professor.rmpData.mostUsefulRating || 
+               edge.node.id !== professor.rmpData.mostUsefulRating.id)) {
+            // Only add if we have fewer than 3 ratings
+            if (ratings.length < 3) {
+              ratings.push({
+                ...edge.node,
+                isMostUseful: false
+              });
+            }
+          }
+        });
+      }
+      
+      if (ratings.length > 0) {
+        reviewsHTML = ratings.map(rating => {
+          const date = rating.date ? new Date(rating.date).toLocaleDateString() : 'Unknown date';
+          const comment = rating.comment || 'No comment provided';
+          const course = rating.class || 'Unknown course';
+          const quality = rating.qualityRating || 'N/A';
+          const difficulty = rating.difficultyRatingRounded || 'N/A';
+          const wouldTakeAgain = rating.iWouldTakeAgain === null ? 'N/A' : rating.iWouldTakeAgain ? 'Yes' : 'No';
+          const grade = rating.grade || 'Not provided';
+          
+          return `
+            <div class="review-item">
+              ${rating.isMostUseful ? '<div style="background-color:#f8f9fa;padding:3px 5px;margin-bottom:5px;border-radius:3px;font-size:11px;color:#555;display:inline-block;">Most Helpful Rating</div>' : ''}
+              <p><strong>Course:</strong> ${course} | <strong>Grade:</strong> ${grade}</p>
+              <p>
+                <strong>Rating:</strong> ${quality}/5 | 
+                <strong>Difficulty:</strong> ${difficulty}/5 | 
+                <strong>Would take again:</strong> ${wouldTakeAgain}
+              </p>
+              <p><strong>Date:</strong> ${date}</p>
+              <p><strong>Comment:</strong> "${comment.substring(0, 150)}${comment.length > 150 ? '...' : ''}"</p>
+            </div>
+          `;
+        }).join('');
+      }
+      
+      // Top tags
+      let tagsHTML = '';
+      if (professor.rmpData.teacherRatingTags && professor.rmpData.teacherRatingTags.length > 0) {
+        const topTags = professor.rmpData.teacherRatingTags
+          .sort((a, b) => b.tagCount - a.tagCount)
+          .slice(0, 3);
+          
+        tagsHTML = `
+          <div class="top-tags">
+            <p><strong>Top Tags:</strong> ${topTags.map(tag => tag.tagName).join(', ')}</p>
+          </div>
+        `;
+      }
+      
+      // Get background color based on rating
+      const getRatingColor = (rating) => {
+        if (!rating || rating === 'N/A') return '#999999';
+        rating = parseFloat(rating);
+        if (rating >= 4) return '#49a63f';
+        if (rating >= 3) return '#bbb84f';
+        if (rating >= 2) return '#e2923c';
+        return '#d54741';
+      };
+      
+      // Show tooltip with enhanced data
       tooltip.innerHTML = `
-        <h3>${professor.fullName || professorName}</h3>
-        ${professor.rmpData.department ? `<div class="rmp-department">${professor.rmpData.department}</div>` : ''}
-        <div class="rmp-rating">
-          <span class="rmp-stars">${getRatingStars(professor.rating)}</span>
-          <span class="rmp-rating-value">${professor.rating ? professor.rating + '/5' : 'No rating'}</span>
+        <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+          <h3 style="margin:0; font-size:16px;">${fullName} 
+            <span style="display:inline-block; background-color:${getRatingColor(avgRating)}; color:white; padding:3px 6px; border-radius:3px; font-size:12px; margin-left:5px;">${avgRating}</span>
+          </h3>
+          <p style="margin:4px 0 0 0; color:#666;">${department}</p>
+          ${rmpUrl ? `<p style="margin:4px 0 0 0; color:#49a63f;"><a href="${rmpUrl}" target="_blank" style="color:#49a63f;">Click to see full profile</a></p>` : ''}
         </div>
-        <div class="rmp-details">
-          <p><strong>${professor.numRatings}</strong> ${professor.numRatings === 1 ? 'rating' : 'ratings'}</p>
-          ${professor.difficulty ? `<p>Difficulty: <strong>${professor.difficulty}</strong>/5</p>` : ''}
-          ${professor.wouldTakeAgain ? `<p>Would take again: <strong>${professor.wouldTakeAgain}%</strong></p>` : ''}
+        <div class="tooltip-body">
+          <div class="rating-stats" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div>
+              <p style="margin:0;"><strong>Overall:</strong> <span style="color:#2196F3; font-weight:bold;">${avgRating}/5</span></p>
+              <p style="margin:4px 0 0 0;"><strong>Difficulty:</strong> ${avgDifficulty}/5</p>
+            </div>
+            <div>
+              <p style="margin:0;"><strong>Would take again:</strong> ${wouldTakeAgain}</p>
+              <p style="margin:4px 0 0 0;"><strong>Total ratings:</strong> ${numRatings}</p>
+            </div>
+          </div>
+          ${tagsHTML}
+          <div class="reviews-section" style="margin-top:10px; border-top:1px solid #eee; padding-top:8px;">
+            <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:bold; color:#2196F3;">Student Reviews</h4>
+            <div class="reviews-container">
+              ${reviewsHTML}
+            </div>
+          </div>
         </div>
-        ${professor.rmpData.legacyId ? `<a href="https://www.ratemyprofessors.com/professor/${professor.rmpData.legacyId}" target="_blank">View on RateMyProfessors</a>` : ''}
+        <div class="tooltip-footer" style="margin-top:8px; font-size:12px; color:#666; text-align:left;">
+          <p style="margin:0;">Data from RateMyProfessors.com</p>
+        </div>
       `;
+      
+      // Add click event to open RMP profile
+      if (rmpUrl) {
+        const rmpLink = tooltip.querySelector('a[target="_blank"]');
+        if (rmpLink) {
+          rmpLink.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.open(rmpUrl, '_blank');
+          });
+        }
+      }
     } else {
       // We know this professor doesn't have ratings
       tooltip.innerHTML = `

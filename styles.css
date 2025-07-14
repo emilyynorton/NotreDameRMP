@@ -7,14 +7,17 @@
 .rmp-tooltip {
   position: absolute;
   background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
-  z-index: 1000;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 15px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   font-size: 14px;
-  max-width: 300px;
+  max-width: 400px;
+  width: 380px;
   font-family: Arial, sans-serif;
+  line-height: 1.4;
+  color: #333;
 }
 
 /* Loading indicator */
@@ -38,6 +41,89 @@
   margin-bottom: 5px;
   font-size: 16px;
   color: #2c3e50;
+}
+
+/* New tooltip components */
+.tooltip-header {
+  margin-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.tooltip-body {
+  margin-top: 8px;
+}
+
+.rating-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.top-tags {
+  margin: 8px 0;
+}
+
+.most-useful {
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.most-useful h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: #2196F3;
+}
+
+.most-useful-rating p {
+  margin: 4px 0;
+}
+
+.tooltip-footer {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+  text-align: left;
+}
+
+/* Scrollable reviews container */
+.reviews-container {
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 5px;
+}
+
+.review-item {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Scrollbar styling */
+.reviews-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reviews-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.reviews-container::-webkit-scrollbar-thumb {
+  background: #2196F3;
+  border-radius: 10px;
+}
+
+.reviews-container::-webkit-scrollbar-thumb:hover {
+  background: #0d6efd;
 }
 
 .rmp-department {

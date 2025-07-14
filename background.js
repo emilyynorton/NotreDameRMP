@@ -271,6 +271,26 @@ const searchProfessor = async (professorName, schoolID, targetDepartment = null)
                             thumbsDownTotal
                             thumbsUpTotal
                         }
+                        ratings(first: 3) {
+                            edges {
+                                node {
+                                    id
+                                    class
+                                    isForOnlineClass
+                                    legacyId
+                                    comment
+                                    helpfulRatingRounded
+                                    ratingTags
+                                    grade
+                                    date
+                                    iWouldTakeAgain
+                                    qualityRating
+                                    difficultyRatingRounded
+                                    thumbsDownTotal
+                                    thumbsUpTotal
+                                }
+                            }
+                        }
                         avgDifficultyRounded
                         school {
                             name
