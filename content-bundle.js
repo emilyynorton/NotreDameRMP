@@ -412,22 +412,89 @@ function handleProfessorHover(event) {
       <p>Loading RateMyProfessor data...</p>
     `;
     
-    // Request data from the background script
-    chrome.runtime.sendMessage({
-      action: 'searchProfessor',
-      professorName: professorName
-    }, response => {
-      // Make sure we're still hovering over the same element
-      if (currentHoveredElement !== element) return;
+    // Add a variable to track if extension is in invalid state
+    if (window.ndExtensionInvalidated) {
+      tooltip.innerHTML = `
+        <h3>${professorName}</h3>
+        <p>Extension needs to be reloaded</p>
+        <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+      `;
       
-      if (response && response.success) {
-        const profData = response.professor;
-        // Create a standardized professor object
-        const prof = {
-          fullName: professorName,
-          rmpData: profData,
-          rating: profData.avgRatingRounded || null,
-          numRatings: profData.numRatings || 0,
+      // Add event listener to refresh button
+      setTimeout(() => {
+        const refreshBtn = document.getElementById('nd-refresh-page-btn');
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', () => {
+            window.location.reload();
+          });
+        }
+      }, 100);
+      
+      return;
+    }
+    
+    // Request data from the background script with error handling
+    try {
+      chrome.runtime.sendMessage({
+        action: 'searchProfessor',
+        professorName: professorName
+      }, response => {
+        // Handle chrome.runtime.lastError which indicates extension context invalidation
+        if (chrome.runtime.lastError) {
+          console.error('Extension error:', chrome.runtime.lastError.message);
+          window.ndExtensionInvalidated = true;
+          tooltip.innerHTML = `
+            <h3>${professorName}</h3>
+            <p>Extension needs to be reloaded</p>
+            <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+          `;
+          
+          // Add event listener to refresh button
+          setTimeout(() => {
+            const refreshBtn = document.getElementById('nd-refresh-page-btn');
+            if (refreshBtn) {
+              refreshBtn.addEventListener('click', () => {
+                window.location.reload();
+              });
+            }
+          }, 100);
+          
+          return;
+        }
+        
+        // Check if we have a valid response (could be undefined if extension context is invalid)
+        if (!response) {
+          window.ndExtensionInvalidated = true;
+          tooltip.innerHTML = `
+            <h3>${professorName}</h3>
+            <p>Extension needs to be reloaded</p>
+            <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+          `;
+          
+          // Add event listener to refresh button
+          setTimeout(() => {
+            const refreshBtn = document.getElementById('nd-refresh-page-btn');
+            if (refreshBtn) {
+              refreshBtn.addEventListener('click', () => {
+                window.location.reload();
+              });
+            }
+          }, 100);
+          
+          return;
+        }
+        
+        // Make sure we're still hovering over the same element
+        if (currentHoveredElement !== element) return;
+      
+        if (response && response.success) {
+          const profData = response.professor;
+          // Create a standardized professor object
+          const prof = {
+            fullName: professorName,
+            rmpData: profData,
+            rating: profData.avgRatingRounded || null,
+            numRatings: profData.numRatings || 0,
           difficulty: profData.avgDifficultyRounded || null,
           wouldTakeAgain: profData.wouldTakeAgainPercentRounded || null,
           found: true
@@ -482,6 +549,15 @@ function handleProfessorHover(event) {
         });
       }
     });
+    } catch (error) {
+      // Handle extension context invalidated errors
+      console.error('Extension error:', error);
+      tooltip.innerHTML = `
+        <h3>${professorName}</h3>
+        <p>Error: ${error.message || 'Extension error'}</p>
+        <small>Try refreshing the page</small>
+      `;
+    }
   }
   
   // Show the tooltip
