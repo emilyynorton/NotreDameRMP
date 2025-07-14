@@ -168,18 +168,7 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
         }
     }
     
-    // 2. Try checking if the search name is contained in the professor name
-    for (const edge of professorPool) {
-        const prof = edge.node;
-        const fullName = `${prof.firstName} ${prof.lastName}`.toLowerCase();
-        
-        if (fullName.includes(searchNameLower) || searchNameLower.includes(fullName)) {
-            console.log(`✅ Found name inclusion match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
-            return prof;
-        }
-    }
-    
-    // 3. Try matching on last name and first name/initial (very common in Notre Dame class listings)
+    // 2. Try matching on last name and first name/initial (very common in Notre Dame class listings)
     for (const edge of professorPool) {
         const prof = edge.node;
         // Get first initial from search name and professor name
@@ -197,7 +186,7 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
         }
     }
     
-    // 4. If no exact match and we have a target department, try matching with department
+    // 3. If no exact match and we have a target department, try matching with department
     if (targetDepartment) {
         for (const edge of professorPool) {
             const prof = edge.node;
@@ -213,8 +202,7 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
     // to indicate that no matching professor was found
     console.log('❌ No professor with matching last name and first initial found.');
     return null;
-    
-    return null;
+
 }
 
 /**
