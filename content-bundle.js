@@ -679,7 +679,7 @@ function handleProfessorHover(event) {
         `https://www.ratemyprofessors.com/professor/${professor.rmpData.legacyId}` : null;
       
       // Get reviews to display
-      let reviewsHTML = '<p>No ratings available</p>';
+      let reviewsHTML = '<p style="margin:10px 0; color:#666; text-align:center;">No ratings available</p>';
       
       // Try to find reviews to display (up to 3)
       const ratings = [];
@@ -773,7 +773,7 @@ function handleProfessorHover(event) {
         <div class="tooltip-body">
           <div class="rating-stats" style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <div>
-              <p style="margin:0;"><strong>Overall:</strong> <span style="color:#2196F3; font-weight:bold;">${avgRating}/5</span></p>
+              <p style="margin:0;"><strong>Overall:</strong> <span class="rmp-stars">${getRatingStars(avgRating)}</span> <span style="color:#2196F3; font-weight:bold;">${avgRating}/5</span></p>
               <p style="margin:4px 0 0 0;"><strong>Difficulty:</strong> ${avgDifficulty}/5</p>
             </div>
             <div>
@@ -784,7 +784,7 @@ function handleProfessorHover(event) {
           ${tagsHTML}
           <div class="reviews-section" style="margin-top:10px; border-top:1px solid #eee; padding-top:8px;">
             <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:bold; color:#2196F3;">Student Reviews</h4>
-            <div class="reviews-container">
+            <div class="reviews-container" style="max-height:200px; overflow-y:auto;">
               ${reviewsHTML}
             </div>
           </div>
@@ -809,24 +809,36 @@ function handleProfessorHover(event) {
       // If we have a processed name from the backend, use it; otherwise use the extracted name
       const displayName = professor.fullName || professorName;
       tooltip.innerHTML = `
-        <h3>${displayName}</h3>
-        <p>No ratings found on RateMyProfessors</p>
+        <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+          <h3 style="margin:0; font-size:16px;">${displayName}</h3>
+        </div>
+        <div class="tooltip-body">
+          <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>
+        </div>
       `;
     }
   } else {
     // We don't have data yet, show loading and request it
     tooltip.innerHTML = `
-      <h3>${professorName}</h3>
-      <div class="loading-spinner"></div>
-      <p>Loading RateMyProfessor data...</p>
+      <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+        <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+      </div>
+      <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
+        <div class="loading-spinner"></div>
+        <p style="margin:10px 0; color:#666;">Loading RateMyProfessor data...</p>
+      </div>
     `;
     
     // Add a variable to track if extension is in invalid state
     if (window.ndExtensionInvalidated) {
       tooltip.innerHTML = `
-        <h3>${professorName}</h3>
-        <p>Extension needs to be reloaded</p>
-        <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+        <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+          <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+        </div>
+        <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
+          <p style="margin:10px 0; color:#666;">Extension needs to be reloaded</p>
+          <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+        </div>
       `;
       
       // Add event listener to refresh button
@@ -853,9 +865,13 @@ function handleProfessorHover(event) {
           console.error('Extension error:', chrome.runtime.lastError.message);
           window.ndExtensionInvalidated = true;
           tooltip.innerHTML = `
-            <h3>${professorName}</h3>
-            <p>Extension needs to be reloaded</p>
-            <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+            <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+              <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+            </div>
+            <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
+              <p style="margin:10px 0; color:#666;">Extension needs to be reloaded</p>
+              <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+            </div>
           `;
           
           // Add event listener to refresh button
@@ -875,9 +891,13 @@ function handleProfessorHover(event) {
         if (!response) {
           window.ndExtensionInvalidated = true;
           tooltip.innerHTML = `
-            <h3>${professorName}</h3>
-            <p>Extension needs to be reloaded</p>
-            <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+            <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+              <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+            </div>
+            <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
+              <p style="margin:10px 0; color:#666;">Extension needs to be reloaded</p>
+              <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
+            </div>
           `;
           
           // Add event listener to refresh button
@@ -919,26 +939,145 @@ function handleProfessorHover(event) {
           chrome.storage.local.set({ 'ndProfessors': allProfs });
         });
         
-        // Update tooltip
+        // Update tooltip with consistent enhanced format
+        // Get background color based on rating
+        const getRatingColor = (rating) => {
+          if (!rating || rating === 'N/A') return '#999999';
+          rating = parseFloat(rating);
+          if (rating >= 4) return '#49a63f';
+          if (rating >= 3) return '#bbb84f';
+          if (rating >= 2) return '#e2923c';
+          return '#d54741';
+        };
+        
+        // Get reviews to display
+        let reviewsHTML = '<p style="margin:10px 0; color:#666; text-align:center;">No ratings available</p>';
+        
+        // Try to find reviews to display (up to 3)
+        const ratings = [];
+        
+        // Add the most useful rating if available
+        if (prof.rmpData.mostUsefulRating) {
+          ratings.push({
+            ...prof.rmpData.mostUsefulRating,
+            isMostUseful: true
+          });
+        }
+        
+        // Add additional ratings if available
+        if (prof.rmpData.ratings && prof.rmpData.ratings.edges) {
+          // Add up to 2 more ratings (we already have the most useful one)
+          prof.rmpData.ratings.edges.forEach(edge => {
+            // Make sure we don't add the same rating twice if it's already the most useful one
+            if (edge.node && 
+                (!prof.rmpData.mostUsefulRating || 
+                 edge.node.id !== prof.rmpData.mostUsefulRating.id)) {
+              // Only add if we have fewer than 3 ratings
+              if (ratings.length < 3) {
+                ratings.push({
+                  ...edge.node,
+                  isMostUseful: false
+                });
+              }
+            }
+          });
+        }
+        
+        if (ratings.length > 0) {
+          reviewsHTML = ratings.map(rating => {
+            const date = rating.date ? new Date(rating.date).toLocaleDateString() : 'Unknown date';
+            const comment = rating.comment || 'No comment provided';
+            const course = rating.class || 'Unknown course';
+            const quality = rating.qualityRating || 'N/A';
+            const difficulty = rating.difficultyRatingRounded || 'N/A';
+            const wouldTakeAgain = rating.iWouldTakeAgain === null ? 'N/A' : rating.iWouldTakeAgain ? 'Yes' : 'No';
+            const grade = rating.grade || 'Not provided';
+            
+            return `
+              <div class="review-item">
+                ${rating.isMostUseful ? '<div style="background-color:#f8f9fa;padding:3px 5px;margin-bottom:5px;border-radius:3px;font-size:11px;color:#555;display:inline-block;">Most Helpful Rating</div>' : ''}
+                <p><strong>Course:</strong> ${course} | <strong>Grade:</strong> ${grade}</p>
+                <p>
+                  <strong>Rating:</strong> ${quality}/5 | 
+                  <strong>Difficulty:</strong> ${difficulty}/5 | 
+                  <strong>Would take again:</strong> ${wouldTakeAgain}
+                </p>
+                <p><strong>Date:</strong> ${date}</p>
+                <p><strong>Comment:</strong> "${comment.substring(0, 150)}${comment.length > 150 ? '...' : ''}"</p>
+              </div>
+            `;
+          }).join('');
+        }
+        
+        // Top tags
+        let tagsHTML = '';
+        if (prof.rmpData.teacherRatingTags && prof.rmpData.teacherRatingTags.length > 0) {
+          const topTags = prof.rmpData.teacherRatingTags
+            .sort((a, b) => b.tagCount - a.tagCount)
+            .slice(0, 3);
+            
+          tagsHTML = `
+            <div class="top-tags">
+              <p><strong>Top Tags:</strong> ${topTags.map(tag => tag.tagName).join(', ')}</p>
+            </div>
+          `;
+        }
+        
+        // Display RMP URL
+        const rmpUrl = prof.rmpData.legacyId ? 
+          `https://www.ratemyprofessors.com/professor/${prof.rmpData.legacyId}` : null;
+        
         tooltip.innerHTML = `
-          <h3>${prof.fullName}</h3>
-          ${prof.rmpData.department ? `<div class="rmp-department">${prof.rmpData.department}</div>` : ''}
-          <div class="rmp-rating">
-            <span class="rmp-stars">${getRatingStars(prof.rating)}</span>
-            <span class="rmp-rating-value">${prof.rating ? prof.rating + '/5' : 'No rating'}</span>
+          <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+            <h3 style="margin:0; font-size:16px;">${prof.fullName} 
+              <span style="display:inline-block; background-color:${getRatingColor(prof.rating)}; color:white; padding:3px 6px; border-radius:3px; font-size:12px; margin-left:5px;">${prof.rating ? prof.rating.toFixed(1) : 'N/A'}</span>
+            </h3>
+            <p style="margin:4px 0 0 0; color:#666;">${prof.rmpData.department || 'N/A'}</p>
+            ${rmpUrl ? `<p style="margin:4px 0 0 0; color:#49a63f;"><a href="${rmpUrl}" target="_blank" style="color:#49a63f;">Click to see full profile</a></p>` : ''}
           </div>
-          <div class="rmp-details">
-            <p><strong>${prof.numRatings}</strong> ${prof.numRatings === 1 ? 'rating' : 'ratings'}</p>
-            ${prof.difficulty ? `<p>Difficulty: <strong>${prof.difficulty}</strong>/5</p>` : ''}
-            ${prof.wouldTakeAgain ? `<p>Would take again: <strong>${prof.wouldTakeAgain}%</strong></p>` : ''}
+          <div class="tooltip-body">
+            <div class="rating-stats" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <div>
+                <p style="margin:0;"><strong>Overall:</strong> <span class="rmp-stars">${getRatingStars(prof.rating)}</span> <span style="color:#2196F3; font-weight:bold;">${prof.rating ? prof.rating.toFixed(1) + '/5' : 'N/A'}</span></p>
+                <p style="margin:4px 0 0 0;"><strong>Difficulty:</strong> ${prof.difficulty ? prof.difficulty.toFixed(1) : 'N/A'}/5</p>
+              </div>
+              <div>
+                <p style="margin:0;"><strong>Would take again:</strong> ${prof.wouldTakeAgain ? prof.wouldTakeAgain + '%' : 'N/A'}</p>
+                <p style="margin:4px 0 0 0;"><strong>Total ratings:</strong> ${prof.numRatings || 0}</p>
+              </div>
+            </div>
+            ${tagsHTML}
+            <div class="reviews-section" style="margin-top:10px; border-top:1px solid #eee; padding-top:8px;">
+              <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:bold; color:#2196F3;">Student Reviews</h4>
+              <div class="reviews-container" style="max-height:200px; overflow-y:auto;">
+                ${reviewsHTML}
+              </div>
+            </div>
           </div>
-          ${prof.rmpData.legacyId ? `<a href="https://www.ratemyprofessors.com/professor/${prof.rmpData.legacyId}" target="_blank">View on RateMyProfessors</a>` : ''}
+          <div class="tooltip-footer" style="margin-top:8px; font-size:12px; color:#666; text-align:left;">
+            <p style="margin:0;">Data from RateMyProfessors.com</p>
+          </div>
         `;
+        
+        // Add click event to open RMP profile
+        if (rmpUrl) {
+          const rmpLink = tooltip.querySelector('a[target="_blank"]');
+          if (rmpLink) {
+            rmpLink.addEventListener('click', (e) => {
+              e.stopPropagation();
+              window.open(rmpUrl, '_blank');
+            });
+          }
+        }
       } else {
         // Not found on RMP
         tooltip.innerHTML = `
-          <h3>${professorName}</h3>
-          <p>No ratings found on RateMyProfessors</p>
+          <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+          </div>
+          <div class="tooltip-body">
+            <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>
+          </div>
         `;
         
         // Save this negative result
