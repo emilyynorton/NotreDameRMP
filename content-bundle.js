@@ -665,8 +665,11 @@ function handleProfessorHover(event) {
       // Create a unique ID for this professor
       const professorId = `prof_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Get professor details
-      const fullName = professor.fullName || professorName;
+      // Get professor details - prioritize RateMyProfessor name
+      // For the found professor, construct the full name from firstName and lastName in the RMP data
+      const fullName = (professor.rmpData && professor.rmpData.firstName && professor.rmpData.lastName) ? 
+                       `${professor.rmpData.firstName} ${professor.rmpData.lastName}` : 
+                       (professor.fullName || professorName);
       const department = professor.rmpData.department || 'N/A';
       const avgRating = professor.rating ? professor.rating.toFixed(1) : 'N/A';
       const numRatings = professor.numRatings || 0;
@@ -803,8 +806,10 @@ function handleProfessorHover(event) {
       }
     } else {
       // We know this professor doesn't have ratings
+      // If we have a processed name from the backend, use it; otherwise use the extracted name
+      const displayName = professor.fullName || professorName;
       tooltip.innerHTML = `
-        <h3>${professorName}</h3>
+        <h3>${displayName}</h3>
         <p>No ratings found on RateMyProfessors</p>
       `;
     }
