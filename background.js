@@ -179,11 +179,20 @@ function filterProfessorResults(edges, searchName, targetDepartment = null) {
         }
     }
     
-    // 3. Try just matching on last name (very common in Notre Dame class listings)
+    // 3. Try matching on last name and first name/initial (very common in Notre Dame class listings)
     for (const edge of professorPool) {
         const prof = edge.node;
-        if (prof.lastName.toLowerCase() === searchLastName) {
-            console.log(`✅ Found last name exact match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
+        // Get first initial from search name and professor name
+        const searchFirstName = searchNameLower.split(' ')[0];
+        const searchFirstInitial = searchFirstName.charAt(0);
+        const profFirstInitial = prof.firstName.toLowerCase().charAt(0);
+        
+        // Match if last names match AND either full first names match OR first initials match
+        if (prof.lastName.toLowerCase() === searchLastName && 
+            (prof.firstName.toLowerCase() === searchFirstName || 
+             (searchFirstName.length === 1 && profFirstInitial === searchFirstName) || 
+             (searchFirstInitial === profFirstInitial))) {
+            console.log(`✅ Found last name + first initial match: ${prof.firstName} ${prof.lastName} at ${prof.school.name}`);
             return prof;
         }
     }
