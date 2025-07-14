@@ -9,14 +9,16 @@
   background: white;
   border: 1px solid #ccc;
   border-radius: 6px;
-  padding: 15px;
+  padding: 8px;
   z-index: 9999;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  font-size: 14px;
+  font-size: 12px;
   max-width: 400px;
-  width: 380px;
+  width: 320px;
+  max-height: 45vh; /* Limit height to 45% of viewport */
+  overflow-y: auto; /* Add scrolling for the entire tooltip */
   font-family: Arial, sans-serif;
-  line-height: 1.4;
+  line-height: 1.25;
   color: #333;
 }
 
@@ -38,26 +40,30 @@
 
 .rmp-tooltip h3 {
   margin-top: 0;
-  margin-bottom: 5px;
-  font-size: 16px;
+  margin-bottom: 3px;
+  font-size: 15px;
   color: #2c3e50;
 }
 
 /* New tooltip components */
 .tooltip-header {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
 }
 
 .tooltip-body {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .rating-stats {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .top-tags {
@@ -82,24 +88,29 @@
 }
 
 .tooltip-footer {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 6px;
+  font-size: 11px;
   color: #666;
   text-align: left;
+  border-top: 1px solid #eee;
+  padding-top: 6px;
+  position: sticky;
+  bottom: 0;
+  background: white;
 }
 
 /* Scrollable reviews container */
 .reviews-container {
-  max-height: 180px;
+  max-height: 100px;
   overflow-y: auto;
-  margin-top: 8px;
+  margin-top: 3px;
   padding-right: 5px;
 }
 
 .review-item {
   border-bottom: 1px solid #eee;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .review-item:last-child {
