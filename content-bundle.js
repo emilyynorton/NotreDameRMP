@@ -757,7 +757,7 @@ function handleProfessorHover(event) {
       const department = professor.rmpData.department || 'N/A';
       const avgRating = professor.rating ? professor.rating.toFixed(1) : 'N/A';
       const numRatings = professor.numRatings || 0;
-      const wouldTakeAgain = professor.wouldTakeAgain ? `${professor.wouldTakeAgain}%` : 'N/A';
+      const wouldTakeAgain = professor.wouldTakeAgain ? `${parseFloat(professor.wouldTakeAgain).toFixed(2)}%` : 'N/A';
       const avgDifficulty = professor.difficulty ? professor.difficulty.toFixed(1) : 'N/A';
       const rmpUrl = professor.rmpData.legacyId ? 
         `https://www.ratemyprofessors.com/professor/${professor.rmpData.legacyId}` : null;
@@ -1134,7 +1134,7 @@ function handleProfessorHover(event) {
                 <p style="margin:4px 0 0 0;"><strong>Difficulty:</strong> ${prof.difficulty ? prof.difficulty.toFixed(1) : 'N/A'}/5</p>
               </div>
               <div>
-                <p style="margin:0;"><strong>Would take again:</strong> ${prof.wouldTakeAgain ? prof.wouldTakeAgain + '%' : 'N/A'}</p>
+                <p style="margin:0;"><strong>Would take again:</strong> ${prof.wouldTakeAgain ? parseFloat(prof.wouldTakeAgain).toFixed(2) + '%' : 'N/A'}</p>
                 <p style="margin:4px 0 0 0;"><strong>Total ratings:</strong> ${prof.numRatings || 0}</p>
               </div>
             </div>
