@@ -898,10 +898,10 @@ function handleProfessorHover(event) {
                          (professor.rmpFullName || professorName);
       tooltip.innerHTML = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-          <h3 style="margin:0; font-size:16px;">${displayName}</h3>
-        </div>
-        <div class="tooltip-body">
-          <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>
+          <div style="display:flex; align-items:center;">
+            <h3 style="margin:0; font-size:16px;">${displayName}</h3>
+            <p style="margin:0 0 0 10px; color:#666; font-size:12px;">No ratings found on RateMyProfessors</p>
+          </div>
         </div>
       `;
     }
@@ -912,9 +912,8 @@ function handleProfessorHover(event) {
             <h3 style="margin:0; font-size:16px;">${professorName}</h3>
             <p style="margin:4px 0 0 0; color:#666; font-size:12px;">Looking up official name...</p>
       </div>
-      <div class="tooltip-body" style="text-align: center; padding: 15px 0;">
-        <div class="loading-spinner"></div>
-        <p style="margin:10px 0; color:#666;">Loading RateMyProfessor data...</p>
+      <div class="tooltip-body" style="text-align: center; padding: 5px 0;">
+        <p style="margin:0; color:#666;">Loading RateMyProfessor data...</p>
       </div>
     `;
     
@@ -1168,10 +1167,10 @@ function handleProfessorHover(event) {
         const displayName = response.convertedName || professorName;
         tooltip.innerHTML = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
-          </div>
-          <div class="tooltip-body">
-            <p style="margin:10px 0; color:#666;">No ratings found on RateMyProfessors</p>
+            <div style="display:flex; align-items:center;">
+              <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+              <p style="margin:0 0 0 10px; color:#666; font-size:12px;">No ratings found on RateMyProfessors</p>
+            </div>
           </div>
         `;
         

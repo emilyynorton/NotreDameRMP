@@ -1,5 +1,13 @@
 /* NDpath - Notre Dame Path Class Search RMP Extension Styles */
 
+/* Notre Dame Colors */
+:root {
+  --nd-blue: #0c2340;
+  --nd-gold: #c99700;
+  --nd-light-gold: #dcb439;
+  --nd-light-blue: #235a8c;
+}
+
 /* Import Font Awesome for star icons */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
@@ -7,11 +15,11 @@
 .rmp-tooltip {
   position: absolute;
   background: white;
-  border: 1px solid #ccc;
+  border: 2px solid var(--nd-gold);
   border-radius: 6px;
   padding: 0;
   z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(12,35,64,0.25);
   font-size: 12px;
   max-width: 400px;
   width: 320px;
@@ -19,24 +27,14 @@
   overflow-y: auto; /* Add scrolling for the entire tooltip */
   font-family: Arial, sans-serif;
   line-height: 1.25;
-  color: #333;
+  color: var(--nd-blue);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-/* Loading indicator */
-.loading-spinner {
-  border: 2px solid #f3f3f3;
-  border-top: 2px solid #3498db;
-  border-radius: 50%;
-  width: 16px;
-  height: 16px;
-  animation: spin 1s linear infinite;
-  margin: 10px auto;
-}
-
 /* Tooltip content styling */
+
 .rmp-tooltip-content {
   padding: 5px;
 }
@@ -45,14 +43,14 @@
   margin-top: 0;
   margin-bottom: 3px;
   font-size: 15px;
-  color: #2c3e50;
+  color: var(--nd-blue);
   line-height: 1.2;
 }
 
 /* New tooltip components */
 .tooltip-header {
   margin-bottom: 4px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--nd-gold);
   padding: 8px 8px 4px 8px;
   position: sticky;
   top: 0;
@@ -61,7 +59,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  box-shadow: 0 4px 6px -4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -4px rgba(12,35,64,0.15);
   width: 100%;
 }
 
@@ -92,7 +90,7 @@
   margin: 0 0 8px 0;
   font-size: 15px;
   font-weight: bold;
-  color: #2196F3;
+  color: var(--nd-blue);
 }
 
 .most-useful-rating p {
@@ -104,7 +102,7 @@
   font-size: 11px;
   color: #666;
   text-align: left;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--nd-gold);
   padding: 6px 8px 8px 8px;
   position: sticky;
   bottom: 0;
@@ -113,7 +111,7 @@
   align-items: flex-end;
   width: 100%;
   z-index: 5;
-  box-shadow: 0 -4px 6px -4px rgba(0,0,0,0.1);
+  box-shadow: 0 -4px 6px -4px rgba(12,35,64,0.15);
 }
 
 /* Scrollable reviews container */
@@ -146,12 +144,12 @@
 }
 
 .reviews-container::-webkit-scrollbar-thumb {
-  background: #2196F3;
+  background: var(--nd-blue);
   border-radius: 10px;
 }
 
 .reviews-container::-webkit-scrollbar-thumb:hover {
-  background: #0d6efd;
+  background: var(--nd-light-blue);
 }
 
 .rmp-department {
@@ -172,7 +170,7 @@
 }
 
 .stars i {
-  color: #f8ce0b; /* Gold star color */
+  color: var(--nd-gold); /* Gold star color */
   margin-right: 2px;
 
 }
@@ -187,7 +185,7 @@
 }
 
 .rmp-stars {
-  color: #f1c40f;
+  color: var(--nd-gold);
   font-size: 18px;
   letter-spacing: 1px;
 }
@@ -208,7 +206,7 @@
 }
 
 .rmp-tooltip a {
-  color: #3498db;
+  color: var(--nd-light-blue);
   text-decoration: none;
   display: block;
   margin-top: 10px;
@@ -226,20 +224,16 @@
   right: 10px;
   z-index: 9999;
   padding: 5px 10px;
-  background-color: #0d2331;
+  background-color: var(--nd-blue);
   color: white;
-  border: none;
+  border: 1px solid var(--nd-gold);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
 }
 
 #ndpath-debug-button:hover {
-  background-color: #2980b9;
+  background-color: var(--nd-light-blue);
 }
 
-/* Animation for the loading spinner */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+
