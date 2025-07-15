@@ -652,96 +652,6 @@ function handleProfessorHover(event) {
   
   console.log('Hovering on professor:', professorName);
   
-  // Reset any previously set inline styles
-  tooltip.style.maxHeight = '';
-  tooltip.style.width = '';
-  
-  // Position tooltip near the element with smart positioning
-  const rect = element.getBoundingClientRect();
-  const tooltipHeight = Math.min(250, window.innerHeight * 0.45); // Even shorter max height, no more than 45% of viewport
-  const tooltipWidth = 320; // Width from CSS (updated)
-  
-  // Calculate available space in different directions
-  const spaceRight = window.innerWidth - rect.right;
-  const spaceLeft = rect.left;
-  
-  // Determine vertical position - align top of tooltip with top of element
-  let topPosition = window.scrollY + rect.top;
-  
-  // Calculate how far the tooltip would extend below the viewport
-  const tooltipBottom = topPosition + tooltipHeight;
-  const viewportBottom = window.scrollY + window.innerHeight - 10;
-  
-  // If tooltip would extend beyond bottom of viewport, adjust position
-  if (tooltipBottom > viewportBottom) {
-    // Move tooltip up so bottom aligns with bottom of viewport
-    topPosition = viewportBottom - tooltipHeight;
-  }
-  
-  // Make sure tooltip doesn't go off the top of the screen
-  topPosition = Math.max(window.scrollY + 5, topPosition);
-  
-  // Set max height dynamically based on available space
-  const availableHeight = Math.min(window.innerHeight - 10, viewportBottom - topPosition);
-  tooltip.style.maxHeight = availableHeight + 'px';
-  
-  // Determine horizontal position
-  let leftPosition;
-  if (spaceRight >= tooltipWidth + 10) { // Add some padding
-    // Enough space to the right - position tooltip to the right of the element
-    leftPosition = window.scrollX + rect.right + 10;
-  } else if (spaceLeft >= tooltipWidth + 10) { // Add some padding
-    // Not enough space to the right, but enough to the left - position to the left
-    leftPosition = window.scrollX + rect.left - tooltipWidth - 10;
-  } else {
-    // Not enough space on either side - position centered or where more space is available
-    if (spaceRight >= spaceLeft) {
-      // More space to the right than left
-      leftPosition = window.scrollX + rect.right + 5;
-      // Constrain width if necessary
-      const availableWidth = window.innerWidth - rect.right - 20;
-      if (availableWidth < tooltipWidth) {
-        tooltip.style.width = availableWidth + 'px';
-      }
-    } else {
-      // More space to the left than right
-      leftPosition = window.scrollX + rect.left - 5 - (spaceLeft < tooltipWidth ? spaceLeft - 10 : tooltipWidth);
-      // Constrain width if necessary
-      if (spaceLeft < tooltipWidth) {
-        tooltip.style.width = (spaceLeft - 10) + 'px';
-      }
-    }
-  }
-  
-  // Apply the positioning
-  tooltip.style.top = topPosition + 'px';
-  tooltip.style.left = leftPosition + 'px';
-  
-  // Final check to ensure the tooltip is positioned correctly after rendering
-  setTimeout(() => {
-    const tooltipRect = tooltip.getBoundingClientRect();
-    
-    // Double-check vertical positioning
-    if (tooltipRect.bottom > window.innerHeight) {
-      // Move tooltip up so bottom aligns with bottom of viewport
-      const newTop = window.innerHeight - tooltipRect.height - 5 + window.scrollY;
-      tooltip.style.top = Math.max(window.scrollY + 5, newTop) + 'px';
-    }
-    
-    // Double-check horizontal positioning
-    if (tooltipRect.right > window.innerWidth) {
-      // Try positioning to the left of the element instead
-      if (rect.left > tooltipWidth + 10) {
-        // Enough space to the left
-        tooltip.style.left = (window.scrollX + rect.left - tooltipWidth - 10) + 'px';
-      } else {
-        // Not enough space to the left either, adjust width
-        const availableWidth = Math.max(window.innerWidth - 10 - (window.scrollX + rect.right + 10), 200);
-        tooltip.style.width = availableWidth + 'px';
-      }
-    }
-  }, 0);
-  
   // Check if we already have data for this professor
   if (professorName in professorData) {
     const professor = professorData[professorName];
@@ -1202,9 +1112,99 @@ function handleProfessorHover(event) {
         <small>Try refreshing the page</small>
       `;
     }
-  }
   
-  // Show the tooltip
+    // Reset any previously set inline styles
+    tooltip.style.maxHeight = '';
+    tooltip.style.width = '';
+    
+    // Position tooltip near the element with smart positioning
+    const rect = element.getBoundingClientRect();
+    const tooltipHeight = Math.min(120, window.innerHeight * 0.45); // Even shorter max height, no more than 45% of viewport
+    const tooltipWidth = 320; // Width from CSS (updated)
+    
+    // Calculate available space in different directions
+    const spaceRight = window.innerWidth - rect.right;
+    const spaceLeft = rect.left;
+    
+    // Determine vertical position - align top of tooltip with top of element
+    let topPosition = window.scrollY + rect.top;
+    
+    // Calculate how far the tooltip would extend below the viewport
+    const tooltipBottom = topPosition + tooltipHeight;
+    const viewportBottom = window.scrollY + window.innerHeight - 10;
+    
+    // If tooltip would extend beyond bottom of viewport, adjust position
+    if (tooltipBottom > viewportBottom) {
+      // Move tooltip up so bottom aligns with bottom of viewport
+      topPosition = viewportBottom - tooltipHeight;
+    }
+    
+    // Make sure tooltip doesn't go off the top of the screen
+    topPosition = Math.max(window.scrollY + 5, topPosition);
+    
+    // Set max height dynamically based on available space
+    const availableHeight = Math.min(window.innerHeight - 10, viewportBottom - topPosition);
+    tooltip.style.maxHeight = availableHeight + 'px';
+    
+    // Determine horizontal position
+    let leftPosition;
+    if (spaceRight >= tooltipWidth + 10) { // Add some padding
+      // Enough space to the right - position tooltip to the right of the element
+      leftPosition = window.scrollX + rect.right + 10;
+    } else if (spaceLeft >= tooltipWidth + 10) { // Add some padding
+      // Not enough space to the right, but enough to the left - position to the left
+      leftPosition = window.scrollX + rect.left - tooltipWidth - 10;
+    } else {
+      // Not enough space on either side - position centered or where more space is available
+      if (spaceRight >= spaceLeft) {
+        // More space to the right than left
+        leftPosition = window.scrollX + rect.right + 5;
+        // Constrain width if necessary
+        const availableWidth = window.innerWidth - rect.right - 20;
+        if (availableWidth < tooltipWidth) {
+          tooltip.style.width = availableWidth + 'px';
+        }
+      } else {
+        // More space to the left than right
+        leftPosition = window.scrollX + rect.left - 5 - (spaceLeft < tooltipWidth ? spaceLeft - 10 : tooltipWidth);
+        // Constrain width if necessary
+        if (spaceLeft < tooltipWidth) {
+          tooltip.style.width = (spaceLeft - 10) + 'px';
+        }
+      }
+    }
+    
+    // Apply the positioning
+    tooltip.style.top = topPosition + 'px';
+    tooltip.style.left = leftPosition + 'px';
+    
+    // Final check to ensure the tooltip is positioned correctly after rendering
+    setTimeout(() => {
+      const tooltipRect = tooltip.getBoundingClientRect();
+      
+      // Double-check vertical positioning
+      if (tooltipRect.bottom > window.innerHeight) {
+        // Move tooltip up so bottom aligns with bottom of viewport
+        const newTop = window.innerHeight - tooltipRect.height - 5 + window.scrollY;
+        tooltip.style.top = Math.max(window.scrollY + 5, newTop) + 'px';
+      }
+      
+      // Double-check horizontal positioning
+      if (tooltipRect.right > window.innerWidth) {
+        // Try positioning to the left of the element instead
+        if (rect.left > tooltipWidth + 10) {
+          // Enough space to the left
+          tooltip.style.left = (window.scrollX + rect.left - tooltipWidth - 10) + 'px';
+        } else {
+          // Not enough space to the left either, adjust width
+          const availableWidth = Math.max(window.innerWidth - 10 - (window.scrollX + rect.right + 10), 200);
+          tooltip.style.width = availableWidth + 'px';
+        }
+      }
+    }, 0);
+  }
+
+  // display the actual tooltip:
   tooltip.style.display = 'block';
 }
 
