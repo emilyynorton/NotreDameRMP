@@ -2,6 +2,13 @@
     "manifest_version": 3,
     "name": "Notre Dame RMP Ratings",
     "version": "1.0",
+    "icons": {
+      "16": "icons/nd16t.png",
+      "32": "icons/nd32t.png",
+      "48": "icons/nd48t.png",
+      "64": "icons/nd64t.png",
+      "128": "icons/nd128t.png"
+    },
     "description": "Adds RateMyProfessors ratings to Notre Dame's class search.",
     "permissions": ["scripting", "activeTab", "tabs", "storage"],
     "host_permissions": [

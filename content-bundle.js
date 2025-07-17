@@ -562,7 +562,7 @@ function attachTooltipListeners() {
 }
 
 function positionTooltip(tooltip, anchorElement) {
-  // Temporarily hide tooltip and move off-screen to allow proper size calculation
+  // Prepare tooltip for accurate measurement
   tooltip.style.visibility = 'hidden';
   tooltip.style.top = '0px';
   tooltip.style.left = '-9999px';
@@ -574,38 +574,37 @@ function positionTooltip(tooltip, anchorElement) {
     const tooltipWidth = tooltipRect.width;
     const tooltipHeight = tooltipRect.height;
 
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+
+    // Vertical position: start aligned with anchor top
+    let topPosition = scrollY + rect.top;
+
+    // Adjust if bottom would fall off screen
+    const tooltipBottom = topPosition + tooltipHeight;
+    const maxBottom = scrollY + window.innerHeight - 10;
+
+    if (tooltipBottom > maxBottom) {
+      topPosition = maxBottom - tooltipHeight;
+    }
+
+    // Prevent tooltip from going too high
+    topPosition = Math.max(scrollY + 5, topPosition);
+
+    // Horizontal position: prefer right side
     const spaceRight = window.innerWidth - rect.right;
     const spaceLeft = rect.left;
 
-    // Calculate vertical position
-    let topPosition = window.scrollY + rect.top;
-    const tooltipBottom = topPosition + tooltipHeight;
-    const viewportBottom = window.scrollY + window.innerHeight - 10;
-
-    if (tooltipBottom > viewportBottom) {
-      topPosition = viewportBottom - tooltipHeight;
-    }
-
-    topPosition = Math.max(window.scrollY + 5, topPosition);
-
-    // Calculate horizontal position
     let leftPosition;
     if (spaceRight >= tooltipWidth + 10) {
-      // Enough space to the right
-      leftPosition = window.scrollX + rect.right + 10;
-    } else if (spaceLeft >= tooltipWidth + 10) {
-      // Enough space to the left
-      leftPosition = window.scrollX + rect.left - tooltipWidth - 10;
+      // Enough space on the right
+      leftPosition = scrollX + rect.right + 10;
     } else {
-      // Not enough space either side, choose the best fit
-      if (spaceRight >= spaceLeft) {
-        leftPosition = window.scrollX + rect.right + 5;
-      } else {
-        leftPosition = window.scrollX + rect.left - tooltipWidth - 5;
-      }
+      // Not enough space on the right — position to the left
+      leftPosition = scrollX + rect.left - tooltipWidth - 10;
     }
 
-    // Apply calculated position
+    // Apply styles
     tooltip.style.top = `${topPosition}px`;
     tooltip.style.left = `${leftPosition}px`;
     tooltip.style.visibility = 'visible';
