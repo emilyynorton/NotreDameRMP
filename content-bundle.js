@@ -604,6 +604,9 @@ function attachTooltipListeners() {
           div.setAttribute('data-rmp-attached', 'true');
           div.style.cursor = 'help';
           div.classList.add('rmp-professor-name');
+          div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+          div.style.position = 'relative'; // For z-index to work properly
+          div.style.zIndex = '100'; // Higher z-index to ensure hover detection
           div.addEventListener('mouseenter', handleProfessorHover);
           div.addEventListener('mouseleave', handleProfessorLeave);
         }
@@ -645,6 +648,9 @@ function attachTooltipListeners() {
         div.setAttribute('data-rmp-attached', 'true');
         div.style.cursor = 'help';
         div.classList.add('rmp-professor-name');
+        div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+        div.style.position = 'relative'; // For z-index to work properly
+        div.style.zIndex = '100'; // Higher z-index to ensure hover detection
         
         // Remove existing event listeners to prevent duplicates
         div.removeEventListener('mouseenter', handleProfessorHover);
