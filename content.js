@@ -25,8 +25,6 @@ function runExtraction() {
   });
 }
 
-// The function runExtraction is already defined above
-
 // Wrap extension functionality in a try-catch to handle context invalidation gracefully
 try {
   // Track the last processed nodes to avoid reprocessing
@@ -67,7 +65,7 @@ try {
               // Skip already processed nodes
               if (processedNodes.has(node)) continue;
               
-              // Mark this node as processed
+              // Mark node as processed
               processedNodes.add(node);
               
               // Check if this node or its children might contain professor information

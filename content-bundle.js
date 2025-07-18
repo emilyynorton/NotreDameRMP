@@ -576,54 +576,86 @@ function attachTooltipListeners() {
   });
 }
 
-function positionTooltip(tooltip, anchorElement) {
-  // Prepare tooltip for accurate measurement
+// Utility function to update tooltip content and reposition it
+function updateTooltipContent(tooltip, content, anchorElement) {
+  // Update the content
+  tooltip.innerHTML = content;
+  
+  // Force display for measurement but keep hidden
   tooltip.style.visibility = 'hidden';
-  tooltip.style.top = '0px';
-  tooltip.style.left = '-9999px';
   tooltip.style.display = 'block';
+  
+  // Reposition after content update
+  positionTooltip(tooltip, anchorElement);
+}
 
-  setTimeout(() => {
+// Helper function to update tooltip content and reposition it correctly
+function updateTooltipContent(tooltip, htmlContent, anchorElement) {
+  // First update the content
+  tooltip.innerHTML = htmlContent;
+  
+  // Then reposition the tooltip properly
+  positionTooltip(tooltip, anchorElement);
+}
+
+function positionTooltip(tooltip, anchorElement) {
+  // Ensure tooltip is visible for measurement but hidden during calculation
+  tooltip.style.visibility = 'hidden';
+  tooltip.style.display = 'block';
+  tooltip.style.top = '0';
+  tooltip.style.left = '0';
+  
+  // Force layout recalculation to ensure accurate dimensions
+  tooltip.offsetHeight; // Force reflow
+
+  // Use requestAnimationFrame for more reliable timing
+  requestAnimationFrame(() => {
+    // Measure both elements
     const rect = anchorElement.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const tooltipWidth = tooltipRect.width;
     const tooltipHeight = tooltipRect.height;
-
+    
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
     // Vertical position: start aligned with anchor top
     let topPosition = scrollY + rect.top;
 
     // Adjust if bottom would fall off screen
-    const tooltipBottom = topPosition + tooltipHeight;
-    const maxBottom = scrollY + window.innerHeight - 10;
-
-    if (tooltipBottom > maxBottom) {
-      topPosition = maxBottom - tooltipHeight;
+    if (topPosition + tooltipHeight > scrollY + viewportHeight - 10) {
+      topPosition = scrollY + viewportHeight - tooltipHeight - 10;
     }
 
     // Prevent tooltip from going too high
     topPosition = Math.max(scrollY + 5, topPosition);
 
-    // Horizontal position: prefer right side
-    const spaceRight = window.innerWidth - rect.right;
-    const spaceLeft = rect.left;
-
+    // Horizontal position: check available space
+    const spaceRight = viewportWidth - (rect.right - scrollX);
+    const spaceLeft = rect.left - scrollX;
+    
     let leftPosition;
+    // First try to place to the right of the element
     if (spaceRight >= tooltipWidth + 10) {
       // Enough space on the right
-      leftPosition = scrollX + rect.right + 10;
+      leftPosition = rect.right + scrollX + 10;
+    } else if (spaceLeft >= tooltipWidth + 10) {
+      // If not enough on right, try left
+      leftPosition = rect.left + scrollX - tooltipWidth - 10;
     } else {
-      // Not enough space on the right — position to the left
-      leftPosition = scrollX + rect.left - tooltipWidth - 10;
+      // If neither side has enough space, center horizontally
+      const centerPos = rect.left + scrollX + (rect.width / 2) - (tooltipWidth / 2);
+      // Make sure it doesn't go off-screen
+      leftPosition = Math.max(scrollX + 5, Math.min(scrollX + viewportWidth - tooltipWidth - 5, centerPos));
     }
 
-    // Apply styles
-    tooltip.style.top = `${topPosition}px`;
-    tooltip.style.left = `${leftPosition}px`;
+    // Apply final position
+    tooltip.style.top = `${Math.round(topPosition)}px`;
+    tooltip.style.left = `${Math.round(leftPosition)}px`;
     tooltip.style.visibility = 'visible';
-  }, 0);
+  });
 }
 
 // Handle mouse enter on professor name
@@ -825,7 +857,7 @@ function handleProfessorHover(event) {
       };
       
       // Show tooltip with enhanced data
-      tooltip.innerHTML = `
+      const tooltipContent = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
           <h3 style="margin:0; font-size:16px;">${fullName} 
             <span style="display:inline-block; background-color:${getRatingColor(avgRating)}; color:white; padding:3px 6px; border-radius:3px; font-size:12px; margin-left:5px;">${avgRating}</span>
@@ -857,6 +889,9 @@ function handleProfessorHover(event) {
         </div>
       `;
       
+      // Update tooltip content and reposition
+      updateTooltipContent(tooltip, tooltipContent, element);
+      
       // Add click event to open RMP profile
       if (rmpUrl) {
         const rmpLink = tooltip.querySelector('a[target="_blank"]');
@@ -869,13 +904,12 @@ function handleProfessorHover(event) {
       }
     } else {
       // We know this professor doesn't have ratings
-      // Always prioritize RateMyProfessor name format when available
       const firstName = professor.rmpFirstName || (professor.firstName || '');
       const lastName = professor.rmpLastName || (professor.lastName || '');
-      // Try to construct the best possible name, prioritizing RMP name
+      // construct best possible name - prioritize RMP name
       const displayName = firstName && lastName ? `${firstName} ${lastName}` : 
                          (professor.rmpFullName || professorName);
-      tooltip.innerHTML = `
+      const tooltipContent = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
           <div style="display:flex; align-items:center;">
             <h3 style="margin:0; font-size:16px;">${displayName}</h3>
@@ -883,22 +917,33 @@ function handleProfessorHover(event) {
           </div>
         </div>
       `;
+      
+      // Update tooltip content and reposition
+      updateTooltipContent(tooltip, tooltipContent, element);
     }
   } else {
     // We don't have data yet, show loading and request it
-    tooltip.innerHTML = `
+    const loadingHtml = `
       <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-            <h3 style="margin:0; font-size:16px;">${professorName}</h3>
-            <p style="margin:4px 0 0 0; color:#666; font-size:12px;">Looking up official name...</p>
+        <div style="display:flex; align-items:center;">
+          <h3 style="margin:0; font-size:16px;">${professorName}</h3>
+          <div style="margin:0 0 0 10px; display:inline-flex; align-items:center;">
+            <div class="loading-spinner" style="margin-right:5px;"></div>
+            <span style="color:#666; font-size:12px;">Looking up official name...</span>
+          </div>
+        </div>
       </div>
       <div class="tooltip-body" style="text-align: center; padding: 5px 0;">
         <p style="margin:0; color:#666;">Loading RateMyProfessor data...</p>
       </div>
     `;
     
+    // Update tooltip content and reposition
+    updateTooltipContent(tooltip, loadingHtml, element);
+    
     // Add a variable to track if extension is in invalid state
     if (window.ndExtensionInvalidated) {
-      tooltip.innerHTML = `
+      const invalidContent = `
         <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
           <h3 style="margin:0; font-size:16px;">${professorName}</h3>
         </div>
@@ -907,6 +952,7 @@ function handleProfessorHover(event) {
           <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
         </div>
       `;
+      updateTooltipContent(tooltip, invalidContent, element);
       
       // Add event listener to refresh button
       setTimeout(() => {
@@ -931,7 +977,7 @@ function handleProfessorHover(event) {
         if (chrome.runtime.lastError) {
           console.error('Extension error:', chrome.runtime.lastError.message);
           window.ndExtensionInvalidated = true;
-          tooltip.innerHTML = `
+          const errorContent = `
             <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
               <h3 style="margin:0; font-size:16px;">${professorName}</h3>
             </div>
@@ -940,6 +986,7 @@ function handleProfessorHover(event) {
               <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
             </div>
           `;
+          updateTooltipContent(tooltip, errorContent, element);
           
           // Add event listener to refresh button
           setTimeout(() => {
@@ -957,7 +1004,7 @@ function handleProfessorHover(event) {
         // Check if we have a valid response (could be undefined if extension context is invalid)
         if (!response) {
           window.ndExtensionInvalidated = true;
-          tooltip.innerHTML = `
+          const errorContent = `
             <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
               <h3 style="margin:0; font-size:16px;">${professorName}</h3>
             </div>
@@ -966,6 +1013,7 @@ function handleProfessorHover(event) {
               <button id="nd-refresh-page-btn" style="background: #0d6efd; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh Page</button>
             </div>
           `;
+          updateTooltipContent(tooltip, errorContent, element);
           
           // Add event listener to refresh button
           setTimeout(() => {
@@ -998,7 +1046,7 @@ function handleProfessorHover(event) {
             difficulty: profData.avgDifficultyRounded || null,
             wouldTakeAgain: profData.wouldTakeAgainPercentRounded || null,
             found: true
-        };
+          };
         
         // Save to our cache
         professorData[professorName] = prof;
@@ -1097,8 +1145,9 @@ function handleProfessorHover(event) {
         // Display RMP URL
         const rmpUrl = prof.rmpData.legacyId ? 
           `https://www.ratemyprofessors.com/professor/${prof.rmpData.legacyId}` : null;
-        
-        tooltip.innerHTML = `
+          
+        // Build the complete professor info content
+        const profContent = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
             <h3 style="margin:0; font-size:16px;">${(prof.rmpData && prof.rmpData.firstName && prof.rmpData.lastName) ? `${prof.rmpData.firstName} ${prof.rmpData.lastName}` : prof.fullName} 
               <span style="display:inline-block; background-color:${getRatingColor(prof.rating)}; color:white; padding:3px 6px; border-radius:3px; font-size:12px; margin-left:5px;">${prof.rating ? prof.rating.toFixed(1) : 'N/A'}</span>
@@ -1118,17 +1167,17 @@ function handleProfessorHover(event) {
               </div>
             </div>
             ${tagsHTML}
-            <div class="reviews-section" style="margin-top:10px; border-top:1px solid #eee; padding-top:8px;">
-              <h4 style="margin:0 0 8px 0; font-size:15px; font-weight:bold; color:#2196F3;">Student Reviews</h4>
-              <div class="reviews-container" style="max-height:200px; overflow-y:auto;">
-                ${reviewsHTML}
-              </div>
+            
+            <div class="reviews" style="margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+              <h4 style="margin:0 0 10px 0; font-size:14px;">Student Reviews</h4>
+              ${reviewsHTML}
             </div>
-          </div>
-          <div class="tooltip-footer" style="margin-top:8px; font-size:12px; color:#666; text-align:left;">
-            <p style="margin:0;">Data from RateMyProfessors.com</p>
+            <p style="margin-top:10px; font-size:11px; color:#888;">Data from RateMyProfessors.com</p>
           </div>
         `;
+        
+        // Update tooltip content and reposition
+        updateTooltipContent(tooltip, profContent, element);
         
         // Add click event to open RMP profile
         if (rmpUrl) {
@@ -1144,7 +1193,8 @@ function handleProfessorHover(event) {
         // Not found on RMP
         // Get name from the response if available, otherwise use the website name
         const displayName = response.convertedName || professorName;
-        tooltip.innerHTML = `
+        
+        const notFoundContent = `
           <div class="tooltip-header" style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
             <div style="display:flex; align-items:center;">
               <h3 style="margin:0; font-size:16px;">${professorName}</h3>
@@ -1152,6 +1202,9 @@ function handleProfessorHover(event) {
             </div>
           </div>
         `;
+        
+        // Update tooltip content and reposition
+        updateTooltipContent(tooltip, notFoundContent, element);
         
         // Save this negative result
         const notFoundProf = {
@@ -1175,17 +1228,26 @@ function handleProfessorHover(event) {
     } catch (error) {
       // Handle extension context invalidated errors
       console.error('Extension error:', error);
-      tooltip.innerHTML = `
-        <h3>${professorName}</h3>
-        <p>Error: ${error.message || 'Extension error'}</p>
-        <small>Try refreshing the page</small>
+      const errorContent = `
+        <div class="tooltip-header" style="margin-bottom:8px;">
+          <h3 style="margin:0; color:#d54741;">Error</h3>
+          <p>Unable to look up professor. Please refresh the page and try again.</p>
+        </div>
       `;
+      // Update tooltip content and reposition
+      updateTooltipContent(tooltip, errorContent, element);
     }
   }
   
-  // Show the tooltip
-  positionTooltip(tooltip, element);
-  tooltip.style.display = 'block';
+  // Instead of manually positioning, use our updateTooltipContent function
+  // which will ensure proper sizing and positioning
+  if (tooltip.innerHTML.trim() === '') {
+    const emptyContent = `<div style="padding:10px;"><p>No data available</p></div>`;
+    updateTooltipContent(tooltip, emptyContent, element);
+  } else {
+    // If content already exists, just reposition
+    positionTooltip(tooltip, element);
+  }
 }
 
 // Handle mouse leave from professor name
