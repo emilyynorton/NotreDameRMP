@@ -462,6 +462,56 @@ function attachTooltipListeners() {
       span.style.position = 'relative'; // For z-index to work properly
       span.style.zIndex = '100'; // Higher z-index to ensure hover detection
       
+      // Wrap the professor name part in a span for more accurate tooltip positioning
+      // Only modify if we haven't already wrapped the name
+      if (!span.querySelector('.name-text')) {
+        // Clone the node to analyze its text content
+        const spanClone = span.cloneNode(true);
+        const fullText = span.textContent;
+        
+        // Check if it contains "Instructor:" text
+        if (fullText.includes('Instructor:')) {
+          // First preserve any existing nodes like sr-only spans
+          const childNodes = Array.from(span.childNodes);
+          let instructorTextNode = null;
+          
+          // Find the text node that contains "Instructor:" text
+          for (const node of childNodes) {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('Instructor:')) {
+              instructorTextNode = node;
+              break;
+            }
+          }
+          
+          // If we found the text node with "Instructor:"
+          if (instructorTextNode) {
+            const instructorText = instructorTextNode.textContent;
+            const parts = instructorText.split('Instructor:');
+            if (parts.length > 1) {
+              // Create text node for "Instructor:" part
+              const labelNode = document.createTextNode('Instructor: ');
+              
+              // Create the name-text span for the professor name
+              const nameSpan = document.createElement('span');
+              nameSpan.className = 'name-text';
+              nameSpan.textContent = parts[1].trim();
+              nameSpan.style.color = window.getComputedStyle(span).color; // Preserve color
+              
+              // Replace the original text node with our new nodes
+              const parent = instructorTextNode.parentNode;
+              parent.replaceChild(nameSpan, instructorTextNode);
+              parent.insertBefore(labelNode, nameSpan);
+              
+              // If there was content before "Instructor:", add it back
+              if (parts[0].trim()) {
+                const beforeNode = document.createTextNode(parts[0]);
+                parent.insertBefore(beforeNode, labelNode);
+              }
+            }
+          }
+        }
+      }
+      
       // We'll use global event handlers instead of direct attachment
       // But keep the direct handlers as a fallback
       span.addEventListener('mouseenter', handleProfessorHover);
@@ -480,6 +530,22 @@ function attachTooltipListeners() {
       div.style.position = 'relative'; // For z-index to work properly
       div.style.zIndex = '100'; // Higher z-index to ensure hover detection
       
+      // Wrap the professor name in a span for more accurate tooltip positioning
+      if (!div.querySelector('.name-text')) {
+        // Save the original text but preserve the original element and styling
+        const originalText = div.textContent.trim();
+        // Instead of replacing all HTML, create a span and move the text into it
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name-text';
+        nameSpan.textContent = originalText;
+        nameSpan.style.color = window.getComputedStyle(div).color; // Preserve the original text color
+        nameSpan.style.display = 'inline';
+        
+        // Clear the div and append our new span
+        div.textContent = '';
+        div.appendChild(nameSpan);
+      }
+      
       // We'll primarily use global event handlers but keep direct handlers as fallback
       div.addEventListener('mouseenter', handleProfessorHover);
       div.addEventListener('mouseleave', handleProfessorLeave);
@@ -493,6 +559,22 @@ function attachTooltipListeners() {
       div.setAttribute('data-rmp-attached', 'true');
       div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
+      
+      // Wrap the professor name in a span for more accurate tooltip positioning
+      if (!div.querySelector('.name-text')) {
+        // Save the original text but preserve the original element and styling
+        const originalText = div.textContent.trim();
+        // Instead of replacing all HTML, create a span and move the text into it
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'name-text';
+        nameSpan.textContent = originalText;
+        nameSpan.style.color = window.getComputedStyle(div).color; // Preserve the original text color
+        nameSpan.style.display = 'inline';
+        
+        // Clear the div and append our new span
+        div.textContent = '';
+        div.appendChild(nameSpan);
+      }
       div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
       div.style.position = 'relative'; // For z-index to work properly
       div.style.zIndex = '100'; // Higher z-index to ensure hover detection
@@ -576,23 +658,14 @@ function attachTooltipListeners() {
   });
 }
 
-// Utility function to update tooltip content and reposition it
-function updateTooltipContent(tooltip, content, anchorElement) {
-  // Update the content
-  tooltip.innerHTML = content;
-  
-  // Force display for measurement but keep hidden
-  tooltip.style.visibility = 'hidden';
-  tooltip.style.display = 'block';
-  
-  // Reposition after content update
-  positionTooltip(tooltip, anchorElement);
-}
-
 // Helper function to update tooltip content and reposition it correctly
 function updateTooltipContent(tooltip, htmlContent, anchorElement) {
   // First update the content
   tooltip.innerHTML = htmlContent;
+  
+  // Force display for measurement but keep hidden
+  tooltip.style.visibility = 'hidden';
+  tooltip.style.display = 'block';
   
   // Then reposition the tooltip properly
   positionTooltip(tooltip, anchorElement);
@@ -610,8 +683,14 @@ function positionTooltip(tooltip, anchorElement) {
 
   // Use requestAnimationFrame for more reliable timing
   requestAnimationFrame(() => {
+    // Check if we should use the name-text span for positioning
+    const nameTextSpan = anchorElement.querySelector('.name-text');
+    
+    // Use the name-text span for positioning if available
+    const targetElement = nameTextSpan || anchorElement;
+    
     // Measure both elements
-    const rect = anchorElement.getBoundingClientRect();
+    const rect = targetElement.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const tooltipWidth = tooltipRect.width;
     const tooltipHeight = tooltipRect.height;
@@ -667,7 +746,12 @@ function handleProfessorHover(event) {
   // Extract professor name
   let professorName;
   
-  if (element.classList.contains('result__flex--9')) {
+  // First try to get the name from the name-text span if it exists
+  const nameTextSpan = element.querySelector('.name-text');
+  if (nameTextSpan) {
+    professorName = nameTextSpan.textContent.trim();
+    console.log('Extracted professor name from name-text span:', professorName);
+  } else if (element.classList.contains('result__flex--9')) {
     // More aggressive extraction for result__flex--9 elements
     console.log('Processing result__flex--9 element:', element.outerHTML);
     
@@ -740,7 +824,14 @@ function handleProfessorHover(event) {
     }
   } else {
     // Default case for other element types
-    professorName = element.textContent.trim();
+    // First try to get the name from the name-text span if it exists
+    const nameTextSpan = element.querySelector('.name-text');
+    if (nameTextSpan) {
+      professorName = nameTextSpan.textContent.trim();
+      console.log('Default case: Extracted professor name from name-text span:', professorName);
+    } else {
+      professorName = element.textContent.trim();
+    }
   }
   
   if (!professorName || professorName === 'TBD' || professorName === 'Staff' || professorName === 'TBA') {

@@ -11,6 +11,20 @@
 /* Import Font Awesome for star icons */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
+/* Professor name text span for accurate tooltip positioning */
+.name-text {
+  display: inline !important;
+  position: relative !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  color: inherit !important; /* Will be overridden inline for specific cases */
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  text-decoration: inherit !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 /* Tooltip styling */
 .rmp-tooltip {
   position: absolute;
