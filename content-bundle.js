@@ -2,8 +2,7 @@
 // bundled version of content script with imports included
 // to be injected into chrome webpage
 
-// ==== BEGIN extractors.js ====
-// Functions to extract professor names from various HTML structures
+// extractors.js - functions to get professor names from HTML
 
 /**
  * Extracts professor names from spans with class "result__flex--9 text--right"
@@ -375,6 +374,10 @@ let professorData = {};
 let currentHoveredElement = null;
 let tooltipHovered = false;
 
+// Global event handling for professor tooltips
+let globalListenersAttached = false;
+let professorElementsProcessed = false;
+
 // Initialize tooltip system
 function setupTooltips(professors = null) {
   console.log('Setting up RMP tooltips');
@@ -440,6 +443,8 @@ function setupTooltips(professors = null) {
 
 // Attach tooltip listeners to all professor elements
 function attachTooltipListeners() {
+  professorElementsProcessed = true;
+  
   // Result Flex professor names
   document.querySelectorAll('span.result__flex--9.text--right').forEach(span => {
     // Force attach to ALL result__flex--9 elements with Instructor text regardless of previous attachment
@@ -449,16 +454,16 @@ function attachTooltipListeners() {
         span.setAttribute('data-rmp-reattached', 'true');
       }
       
-      // Always set these attributes and event listeners to ensure consistency
+      // Always set these attributes to mark professor elements
       span.setAttribute('data-rmp-attached', 'true');
       span.style.cursor = 'help';
       span.classList.add('rmp-professor-name');
+      span.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+      span.style.position = 'relative'; // For z-index to work properly
+      span.style.zIndex = '100'; // Higher z-index to ensure hover detection
       
-      // Remove existing event listeners to prevent duplicates
-      span.removeEventListener('mouseenter', handleProfessorHover);
-      span.removeEventListener('mouseleave', handleProfessorLeave);
-      
-      // Add new event listeners
+      // We'll use global event handlers instead of direct attachment
+      // But keep the direct handlers as a fallback
       span.addEventListener('mouseenter', handleProfessorHover);
       span.addEventListener('mouseleave', handleProfessorLeave);
     }
@@ -471,6 +476,11 @@ function attachTooltipListeners() {
       div.setAttribute('data-rmp-attached', 'true');
       div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
+      div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+      div.style.position = 'relative'; // For z-index to work properly
+      div.style.zIndex = '100'; // Higher z-index to ensure hover detection
+      
+      // We'll primarily use global event handlers but keep direct handlers as fallback
       div.addEventListener('mouseenter', handleProfessorHover);
       div.addEventListener('mouseleave', handleProfessorLeave);
     }
@@ -483,6 +493,11 @@ function attachTooltipListeners() {
       div.setAttribute('data-rmp-attached', 'true');
       div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
+      div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+      div.style.position = 'relative'; // For z-index to work properly
+      div.style.zIndex = '100'; // Higher z-index to ensure hover detection
+      
+      // We'll primarily use global event handlers but keep direct handlers as fallback
       div.addEventListener('mouseenter', handleProfessorHover);
       div.addEventListener('mouseleave', handleProfessorLeave);
     }
@@ -1216,6 +1231,46 @@ function getRatingStars(rating) {
 // Setup tooltips on page load
 setupTooltips();
 
+// Set up global event handlers
+function setupGlobalEventHandlers() {
+  if (globalListenersAttached) return;
+  
+  // Add global mouseover handler
+  document.addEventListener('mouseover', (event) => {
+    // Find if we're hovering over a professor element or any of its children
+    const professorElement = event.target.closest('.rmp-professor-name');
+    
+    if (professorElement && professorElement !== currentHoveredElement) {
+      // We're hovering over a new professor element
+      console.log('Global handler detected hover on:', professorElement.textContent.trim());
+      
+      // Call the existing handler with the correct context
+      handleProfessorHover({ currentTarget: professorElement });
+    }
+  });
+
+  document.addEventListener('mouseout', (event) => {
+    // Check if we're leaving a professor element
+    const professorElement = event.target.closest('.rmp-professor-name');
+    const relatedTarget = event.relatedTarget ? event.relatedTarget.closest('.rmp-professor-name') : null;
+    
+    // Only trigger leave if we're actually leaving the professor element
+    // (not just moving between its children)
+    if (currentHoveredElement && professorElement && !relatedTarget && !tooltipHovered) {
+      console.log('Global handler detected leave from professor element');
+      
+      // Call the existing leave handler
+      handleProfessorLeave();
+    }
+  });
+  
+  globalListenersAttached = true;
+  console.log('Global event handlers for professor tooltips set up');
+}
+
+// Setup tooltips on page load
+setupTooltips();
+
 // Set up MutationObserver to catch new professor elements
 const tooltipObserver = new MutationObserver(mutations => {
   let shouldCheck = false;
@@ -1229,18 +1284,26 @@ const tooltipObserver = new MutationObserver(mutations => {
   if (shouldCheck) {
     // Add a small delay to ensure the DOM is fully updated
     setTimeout(() => {
-      // First run the regular attachment
-      attachTooltipListeners();
-      
-      console.log('Performing extra checks for missed elements...');
+    // First run the regular attachment
+    attachTooltipListeners();
+    
+    // Ensure global event handlers are set up
+    setupGlobalEventHandlers();
+    
+    console.log('Performing extra checks for missed elements...');
       
       // Extra check for result__flex--9 elements with Instructor text
       document.querySelectorAll('span.result__flex--9.text--right').forEach(span => {
         if (span.textContent.includes('Instructor:') && !span.hasAttribute('data-rmp-attached')) {
           console.log('Found missed result__flex--9 element, attaching listeners');
           span.setAttribute('data-rmp-missed', 'true');
+          span.setAttribute('data-rmp-attached', 'true');
           span.style.cursor = 'help';
           span.classList.add('rmp-professor-name');
+          span.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+          span.style.position = 'relative'; // For z-index to work properly
+          span.style.zIndex = '100'; // Higher z-index to ensure hover detection
+          // Keep direct handlers as fallback
           span.addEventListener('mouseenter', handleProfessorHover);
           span.addEventListener('mouseleave', handleProfessorLeave);
         }
@@ -1250,17 +1313,26 @@ const tooltipObserver = new MutationObserver(mutations => {
       document.querySelectorAll('div.course-section-instructorresult-html:not([data-rmp-attached])').forEach(div => {
         console.log('Found missed course-section-instructorresult-html element, attaching listeners');
         div.setAttribute('data-rmp-missed', 'true');
+        div.setAttribute('data-rmp-attached', 'true');
         div.style.cursor = 'help';
         div.classList.add('rmp-professor-name');
+        div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+        div.style.position = 'relative'; // For z-index to work properly
+        div.style.zIndex = '100'; // Higher z-index to ensure hover detection
+        // Keep direct handlers as fallback
         div.addEventListener('mouseenter', handleProfessorHover);
         div.addEventListener('mouseleave', handleProfessorLeave);
       });
       
-      // Force-reprocess all spans with rmp-professor-name class to ensure they have working listeners
+      // Process all elements with rmp-professor-name class to ensure proper styling and attributes
       document.querySelectorAll('.rmp-professor-name').forEach(el => {
-        // Ensure all elements have event listeners by removing and re-adding them
-        el.removeEventListener('mouseenter', handleProfessorHover);
-        el.removeEventListener('mouseleave', handleProfessorLeave);
+        // Make sure all professor elements have the required styles for better hover detection
+        el.style.cursor = 'help';
+        el.style.pointerEvents = 'auto';
+        el.style.position = 'relative';
+        el.style.zIndex = '100';
+        
+        // Keep the direct event listeners as a fallback
         el.addEventListener('mouseenter', handleProfessorHover);
         el.addEventListener('mouseleave', handleProfessorLeave);
         el.setAttribute('data-rmp-reprocessed', 'true');
@@ -1272,12 +1344,18 @@ const tooltipObserver = new MutationObserver(mutations => {
 
 // Immediately apply attachment to ensure all current elements are processed
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(attachTooltipListeners, 500);
+  setTimeout(() => {
+    attachTooltipListeners();
+    setupGlobalEventHandlers(); // Also set up global event handlers
+  }, 500);
 });
 
 // Process the page immediately in case DOMContentLoaded already fired
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(attachTooltipListeners, 100);
+  setTimeout(() => {
+    attachTooltipListeners();
+    setupGlobalEventHandlers(); // Also set up global event handlers
+  }, 100);
 }
 
 // More aggressive observer configuration
@@ -1287,3 +1365,8 @@ tooltipObserver.observe(document.body, {
   attributes: true, 
   attributeFilter: ['class', 'data-rmp-attached'] 
 });
+
+// Make sure global event handlers are set up right away
+if (!globalListenersAttached) {
+  setupGlobalEventHandlers();
+}

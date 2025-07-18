@@ -73,6 +73,7 @@ try {
               // Check if this node or its children might contain professor information
               if (
                 node.querySelector('.result__flex--9.text--right') ||
+                node.querySelector('.result__flex--9.text--right.rmp-professor-name') ||
                 node.querySelector('.instructor-detail') ||
                 node.querySelector('.calendar_viewing__instr') ||
                 node.classList?.contains('result__flex--9') ||
