@@ -526,9 +526,6 @@ function attachTooltipListeners() {
       div.setAttribute('data-rmp-attached', 'true');
       div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
-      div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
-      div.style.position = 'relative'; // For z-index to work properly
-      div.style.zIndex = '100'; // Higher z-index to ensure hover detection
       
       // Wrap the professor name in a span for more accurate tooltip positioning
       if (!div.querySelector('.name-text')) {
@@ -540,15 +537,19 @@ function attachTooltipListeners() {
         nameSpan.textContent = originalText;
         nameSpan.style.color = window.getComputedStyle(div).color; // Preserve the original text color
         nameSpan.style.display = 'inline';
+        nameSpan.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+        nameSpan.style.position = 'relative'; // For z-index to work properly
+        nameSpan.style.zIndex = '100'; // Higher z-index to ensure hover detection
+        nameSpan.style.cursor = 'help';
         
         // Clear the div and append our new span
         div.textContent = '';
         div.appendChild(nameSpan);
+        
+        // Add event listeners to the span instead of div
+        nameSpan.addEventListener('mouseenter', handleProfessorHover);
+        nameSpan.addEventListener('mouseleave', handleProfessorLeave);
       }
-      
-      // We'll primarily use global event handlers but keep direct handlers as fallback
-      div.addEventListener('mouseenter', handleProfessorHover);
-      div.addEventListener('mouseleave', handleProfessorLeave);
     }
   });
   
@@ -557,7 +558,6 @@ function attachTooltipListeners() {
     const name = div.textContent.trim();
     if (name && name !== 'TBD' && name !== 'Staff' && name !== 'TBA' && !div.hasAttribute('data-rmp-attached')) {
       div.setAttribute('data-rmp-attached', 'true');
-      div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
       
       // Wrap the professor name in a span for more accurate tooltip positioning
@@ -570,18 +570,19 @@ function attachTooltipListeners() {
         nameSpan.textContent = originalText;
         nameSpan.style.color = window.getComputedStyle(div).color; // Preserve the original text color
         nameSpan.style.display = 'inline';
+        nameSpan.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+        nameSpan.style.position = 'relative'; // For z-index to work properly
+        nameSpan.style.zIndex = '100'; // Higher z-index to ensure hover detection
+        nameSpan.style.cursor = 'help';
         
         // Clear the div and append our new span
         div.textContent = '';
         div.appendChild(nameSpan);
+        
+        // Add event listeners to the span instead of div
+        nameSpan.addEventListener('mouseenter', handleProfessorHover);
+        nameSpan.addEventListener('mouseleave', handleProfessorLeave);
       }
-      div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
-      div.style.position = 'relative'; // For z-index to work properly
-      div.style.zIndex = '100'; // Higher z-index to ensure hover detection
-      
-      // We'll primarily use global event handlers but keep direct handlers as fallback
-      div.addEventListener('mouseenter', handleProfessorHover);
-      div.addEventListener('mouseleave', handleProfessorLeave);
     }
   });
   
@@ -592,23 +593,59 @@ function attachTooltipListeners() {
       if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
         // Extract text nodes to check if there's a valid professor name
         let hasValidName = false;
+        let professorName = '';
+        
+        // Find the professor name text
         for (const node of div.childNodes) {
-          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() && 
-              !['TBD', 'Staff', 'TBA'].includes(node.textContent.trim())) {
-            hasValidName = true;
-            break;
+          if (node !== headerTextSpan && node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
+            if (text && !['TBD', 'Staff', 'TBA'].includes(text)) {
+              hasValidName = true;
+              professorName += text;
+            }
           }
         }
         
-        if (hasValidName) {
+        // Clean up the name
+        professorName = professorName.trim().replace(/^["|\s]+|["|\s]+$/g, '');
+        
+        if (hasValidName && professorName) {
           div.setAttribute('data-rmp-attached', 'true');
-          div.style.cursor = 'help';
           div.classList.add('rmp-professor-name');
-          div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
-          div.style.position = 'relative'; // For z-index to work properly
-          div.style.zIndex = '100'; // Higher z-index to ensure hover detection
-          div.addEventListener('mouseenter', handleProfessorHover);
-          div.addEventListener('mouseleave', handleProfessorLeave);
+          
+          // Create a new span for the professor name if it doesn't exist
+          if (!div.querySelector('.name-text')) {
+            // Clone the current div content to preserve structure
+            const currentContent = Array.from(div.childNodes);
+            
+            // Create the name-text span for the professor name
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'name-text';
+            nameSpan.textContent = professorName;
+            nameSpan.style.color = window.getComputedStyle(div).color;
+            nameSpan.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+            nameSpan.style.position = 'relative'; // For z-index to work properly
+            nameSpan.style.zIndex = '100'; // Higher z-index to ensure hover detection
+            nameSpan.style.cursor = 'help';
+            
+            // Clear the div
+            div.textContent = '';
+            
+            // Add back header text if it exists
+            if (headerTextSpan) {
+              div.appendChild(headerTextSpan.cloneNode(true));
+            }
+            
+            // Add a space after "Instructor:"
+            div.appendChild(document.createTextNode(' '));
+            
+            // Add our name span
+            div.appendChild(nameSpan);
+            
+            // Add event listeners to the span instead of div
+            nameSpan.addEventListener('mouseenter', handleProfessorHover);
+            nameSpan.addEventListener('mouseleave', handleProfessorLeave);
+          }
         }
       }
     }
@@ -636,7 +673,7 @@ function attachTooltipListeners() {
       }
       
       // Clean up and verify the name
-      professorName = professorName.trim().replace(/^"|"$/g, '');
+      professorName = professorName.trim().replace(/^"|"/g, '');
       
       if (hasValidName && professorName) {
         // Add a debug class to track which elements we've processed
@@ -644,21 +681,47 @@ function attachTooltipListeners() {
           div.setAttribute('data-rmp-reattached', 'true');
         }
         
-        // Always set these attributes and event listeners to ensure consistency
+        // Always set these attributes to ensure consistency
         div.setAttribute('data-rmp-attached', 'true');
-        div.style.cursor = 'help';
         div.classList.add('rmp-professor-name');
-        div.style.pointerEvents = 'auto'; // Ensure hover events reach this element
-        div.style.position = 'relative'; // For z-index to work properly
-        div.style.zIndex = '100'; // Higher z-index to ensure hover detection
         
         // Remove existing event listeners to prevent duplicates
         div.removeEventListener('mouseenter', handleProfessorHover);
         div.removeEventListener('mouseleave', handleProfessorLeave);
         
-        // Add new event listeners
-        div.addEventListener('mouseenter', handleProfessorHover);
-        div.addEventListener('mouseleave', handleProfessorLeave);
+        // Create a name-text span for more accurate tooltip positioning if it doesn't exist
+        if (!div.querySelector('.name-text')) {
+          // Save the current content
+          const currentContent = Array.from(div.childNodes);
+          
+          // Create the name-text span
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'name-text';
+          nameSpan.textContent = professorName;
+          nameSpan.style.color = window.getComputedStyle(div).color;
+          nameSpan.style.pointerEvents = 'auto'; // Ensure hover events reach this element
+          nameSpan.style.position = 'relative'; // For z-index to work properly
+          nameSpan.style.zIndex = '100'; // Higher z-index to ensure hover detection
+          nameSpan.style.cursor = 'help';
+          
+          // Clear the div
+          div.textContent = '';
+          
+          // Add back header text if it exists
+          if (headerTextSpan) {
+            div.appendChild(headerTextSpan.cloneNode(true));
+          }
+          
+          // Add a space after "Instructor:"
+          div.appendChild(document.createTextNode(' '));
+          
+          // Add our name span
+          div.appendChild(nameSpan);
+          
+          // Add event listeners to the span instead of div
+          nameSpan.addEventListener('mouseenter', handleProfessorHover);
+          nameSpan.addEventListener('mouseleave', handleProfessorLeave);
+        }
       }
     }
   });
@@ -1349,9 +1412,13 @@ function handleProfessorHover(event) {
 
 // Handle mouse leave from professor name
 function handleProfessorLeave() {
-  // Instead of hiding immediately, we'll wait to see if mouse enters the tooltip
+  // Store which element triggered the leave event
+  const previousElement = currentHoveredElement;
+  
+  // Instead of hiding immediately, we'll wait to see if mouse enters another professor or the tooltip
   setTimeout(() => {
-    if (!tooltipHovered) {
+    // Only hide the tooltip if we're not hovering over any professor element or the tooltip itself
+    if (!tooltipHovered && currentHoveredElement === previousElement) {
       tooltip.style.display = 'none';
       currentHoveredElement = null; // Clear the current hovered element
     }
