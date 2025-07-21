@@ -10,18 +10,14 @@ import { processAllNames } from './utils/formatters.js';
 function runExtraction() {
   // Extract all professor names using our utility function
   const rawProfessorNames = extractAllProfessorNames();
-  console.log('Raw extracted professor names:', rawProfessorNames);
   
   // Format the names into a standard structure
   const formattedProfessors = processAllNames(rawProfessorNames);
-  console.log('Formatted professor data:', formattedProfessors);
   
   // Send the formatted professor data to the background script
   chrome.runtime.sendMessage({
     action: 'processProfessors',
     professors: formattedProfessors
-  }, response => {
-    console.log('Response from background script:', response);
   });
 }
 
@@ -32,7 +28,6 @@ try {
   
   // Run the extraction when the page is fully loaded
   window.addEventListener('load', () => {
-    console.log('Notre Dame professor extraction script running...');
     runExtraction();
   });
   
@@ -46,7 +41,6 @@ try {
       
       if (url !== lastUrl) {
         lastUrl = url;
-        console.log('URL changed, extracting professors again...');
         urlChanged = true;
         runExtraction();
       }
@@ -89,7 +83,6 @@ try {
         
         // Only run extraction if we found potential new professor elements
         if (hasNewProfessorElements) {
-          console.log('New professor elements detected, extracting professors...');
           runExtraction();
         }
       }
@@ -97,7 +90,6 @@ try {
       // If extension context is invalidated, stop the observer
       if (error.message.includes('Extension context invalidated')) {
         observer.disconnect();
-        console.log('Extension context invalidated, observer stopped');
       } else {
         console.error('Error in MutationObserver:', error);
       }

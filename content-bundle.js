@@ -1,5 +1,4 @@
-// content-bundle.js
-// bundled version of content script with imports included
+// content-bundle.js - bundled version of content script with imports included
 // to be injected into chrome webpage
 
 // extractors.js - functions to get professor names from HTML
@@ -223,7 +222,7 @@ function standardizeNameFormat(name) {
     lastName = parts[0];
     firstName = parts[1];
   } 
-  // Handle "F. Lastname" format (like "J. Rodriguez")
+  // Handle "F. Lastname" format
   else if (name.includes('.')) {
     const parts = name.split('.');
     firstName = parts[0].trim(); // This will be just the initial
@@ -271,18 +270,14 @@ function processAllNames(names) {
 function runExtraction() {
   // Extract all professor names using our utility function
   const rawProfessorNames = extractAllProfessorNames();
-  console.log('Raw extracted professor names:', rawProfessorNames);
   
   // Format the names into a standard structure
   const formattedProfessors = processAllNames(rawProfessorNames);
-  console.log('Formatted professor data:', formattedProfessors);
   
   // Send the formatted professor data to the background script
   chrome.runtime.sendMessage({
     action: 'processProfessors',
     professors: formattedProfessors
-  }, response => {
-    console.log('Response from background script:', response);
   });
 }
 
@@ -291,7 +286,6 @@ const processedNodes = new WeakSet();
 
 // Run the extraction when the page is fully loaded
 window.addEventListener('load', () => {
-  console.log('Notre Dame professor extraction script running...');
   runExtraction();
 });
 
@@ -305,7 +299,6 @@ const observer = new MutationObserver((mutations) => {
     
     if (url !== lastUrl) {
       lastUrl = url;
-      console.log('URL changed, extracting professors again...');
       urlChanged = true;
       runExtraction();
     }
@@ -347,7 +340,6 @@ const observer = new MutationObserver((mutations) => {
       
       // Only run extraction if we found potential new professor elements
       if (hasNewProfessorElements) {
-        console.log('New professor elements detected, extracting professors...');
         runExtraction();
       }
     }
@@ -362,8 +354,7 @@ observer.observe(document, { subtree: true, childList: true });
 // Listen for messages from background script (for receiving processed data)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'professorsProcessed') {
-    console.log('Received processed professor data:', request.professors);
-    // When we receive processed professor data, update our local cache
+    // update local cache with professor data
     setupTooltips(request.professors);
   }
 });
@@ -380,8 +371,7 @@ let professorElementsProcessed = false;
 
 // Initialize tooltip system
 function setupTooltips(professors = null) {
-  console.log('Setting up RMP tooltips');
-  
+
   // If we received new data, update our cache
   if (professors && Array.isArray(professors)) {
     professors.forEach(prof => {
@@ -389,7 +379,6 @@ function setupTooltips(professors = null) {
         professorData[prof.fullName] = prof;
       }
     });
-    console.log(`Updated professor data cache with ${professors.length} professors`);
   }
   
   // Create tooltip element if it doesn't exist
@@ -433,7 +422,6 @@ function setupTooltips(professors = null) {
           professorData[prof.fullName] = prof;
         }
       });
-      console.log(`Loaded ${result.ndProfessors.length} professors from storage`);
     }
     
     // Attach hover listeners to professor elements
@@ -512,8 +500,8 @@ function attachTooltipListeners() {
         }
       }
       
-      // We'll use global event handlers instead of direct attachment
-      // But keep the direct handlers as a fallback
+      // use global event handlers instead of direct attachment
+      // but keep the direct handlers as a fallback
       span.addEventListener('mouseenter', handleProfessorHover);
       span.addEventListener('mouseleave', handleProfessorLeave);
     }
@@ -527,7 +515,7 @@ function attachTooltipListeners() {
       div.style.cursor = 'help';
       div.classList.add('rmp-professor-name');
       
-      // Wrap the professor name in a span for more accurate tooltip positioning
+      // Wrap professor name in span for tooltip
       if (!div.querySelector('.name-text')) {
         // Save the original text but preserve the original element and styling
         const originalText = div.textContent.trim();
@@ -560,7 +548,7 @@ function attachTooltipListeners() {
       div.setAttribute('data-rmp-attached', 'true');
       div.classList.add('rmp-professor-name');
       
-      // Wrap the professor name in a span for more accurate tooltip positioning
+      // Wrap professor name in a span for tooltip positioning
       if (!div.querySelector('.name-text')) {
         // Save the original text but preserve the original element and styling
         const originalText = div.textContent.trim();
@@ -654,7 +642,7 @@ function attachTooltipListeners() {
   // Course Section Instructor Result HTML names
   document.querySelectorAll('div.course-section-instructorresult-html').forEach(div => {
     // Force attach to ALL course-section-instructorresult-html elements regardless of previous attachment
-    // This ensures we don't miss any elements due to timing or DOM updates
+    // goal: ensure we don't miss any elements due to timing or DOM updates
     const headerTextSpan = div.querySelector('.header-text');
     if (headerTextSpan && headerTextSpan.textContent.includes('Instructor:')) {
       // Extract text nodes to check if there's a valid professor name
@@ -810,7 +798,6 @@ function positionTooltip(tooltip, anchorElement) {
 function handleProfessorHover(event) {
   const element = event.currentTarget;
   currentHoveredElement = element;
-  console.log('Hover detected on professor element:', element);
   
   // Extract professor name
   let professorName;
@@ -819,15 +806,11 @@ function handleProfessorHover(event) {
   const nameTextSpan = element.querySelector('.name-text');
   if (nameTextSpan) {
     professorName = nameTextSpan.textContent.trim();
-    console.log('Extracted professor name from name-text span:', professorName);
   } else if (element.classList.contains('result__flex--9')) {
-    // More aggressive extraction for result__flex--9 elements
-    console.log('Processing result__flex--9 element:', element.outerHTML);
     
     // First check if this has an sr-only span
     const srOnlySpan = element.querySelector('.sr-only');
     if (srOnlySpan && srOnlySpan.textContent.includes('Instructor:')) {
-      console.log('Found sr-only span with Instructor text');
       
       // Extract all text from this element that is NOT in the sr-only span
       let name = '';
@@ -848,23 +831,19 @@ function handleProfessorHover(event) {
       if (!extractedFromNode || !name) {
         const fullText = element.textContent.trim();
         name = fullText.substring(fullText.indexOf('Instructor:') + 'Instructor:'.length).trim();
-        console.log('Used fallback extraction, got:', name);
       }
       
       // Clean up the extracted name
       professorName = name.trim();
       professorName = professorName.replace(/^"\s*/, '').replace(/\s*"$/, ''); // Remove quotes if present
-      console.log('Extracted professor name:', professorName);
     } else {
       // Regular case: Instructor: text is part of the element's text content
       const text = element.textContent.trim();
-      console.log('Processing regular result__flex--9, text content:', text);
       if (text.includes('Instructor:')) {
         professorName = text.substring(text.indexOf('Instructor:') + 'Instructor:'.length).trim();
       } else {
         professorName = text;
       }
-      console.log('Extracted professor name:', professorName);
     }
   } else if (element.classList.contains('course-section-instr') || element.classList.contains('course-section-instructorresult-html')) {
     // Handle course-section-instr and course-section-instructorresult-html elements
@@ -897,7 +876,6 @@ function handleProfessorHover(event) {
     const nameTextSpan = element.querySelector('.name-text');
     if (nameTextSpan) {
       professorName = nameTextSpan.textContent.trim();
-      console.log('Default case: Extracted professor name from name-text span:', professorName);
     } else {
       professorName = element.textContent.trim();
     }
@@ -906,8 +884,6 @@ function handleProfessorHover(event) {
   if (!professorName || professorName === 'TBD' || professorName === 'Staff' || professorName === 'TBA') {
     return;
   }
-  
-  console.log('Hovering on professor:', professorName);
   
   // Reset any previously set inline styles
   tooltip.style.maxHeight = '';
@@ -1467,9 +1443,6 @@ function setupGlobalEventHandlers() {
     const professorElement = event.target.closest('.rmp-professor-name');
     
     if (professorElement && professorElement !== currentHoveredElement) {
-      // We're hovering over a new professor element
-      console.log('Global handler detected hover on:', professorElement.textContent.trim());
-      
       // Call the existing handler with the correct context
       handleProfessorHover({ currentTarget: professorElement });
     }
@@ -1483,15 +1456,12 @@ function setupGlobalEventHandlers() {
     // Only trigger leave if we're actually leaving the professor element
     // (not just moving between its children)
     if (currentHoveredElement && professorElement && !relatedTarget && !tooltipHovered) {
-      console.log('Global handler detected leave from professor element');
-      
       // Call the existing leave handler
       handleProfessorLeave();
     }
   });
   
   globalListenersAttached = true;
-  console.log('Global event handlers for professor tooltips set up');
 }
 
 // Setup tooltips on page load
@@ -1515,13 +1485,10 @@ const tooltipObserver = new MutationObserver(mutations => {
     
     // Ensure global event handlers are set up
     setupGlobalEventHandlers();
-    
-    console.log('Performing extra checks for missed elements...');
-      
+        
       // Extra check for result__flex--9 elements with Instructor text
       document.querySelectorAll('span.result__flex--9.text--right').forEach(span => {
         if (span.textContent.includes('Instructor:') && !span.hasAttribute('data-rmp-attached')) {
-          console.log('Found missed result__flex--9 element, attaching listeners');
           span.setAttribute('data-rmp-missed', 'true');
           span.setAttribute('data-rmp-attached', 'true');
           span.style.cursor = 'help';
@@ -1537,7 +1504,6 @@ const tooltipObserver = new MutationObserver(mutations => {
       
       // Extra check for course-section-instructorresult-html elements
       document.querySelectorAll('div.course-section-instructorresult-html:not([data-rmp-attached])').forEach(div => {
-        console.log('Found missed course-section-instructorresult-html element, attaching listeners');
         div.setAttribute('data-rmp-missed', 'true');
         div.setAttribute('data-rmp-attached', 'true');
         div.style.cursor = 'help';

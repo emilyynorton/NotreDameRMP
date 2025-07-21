@@ -2,7 +2,6 @@
 
 /**
  * Standardizes a professor's name for RateMyProfessor searching
- * Handles various formats like "Lastname, Firstname", "F. Lastname", etc.
  * 
  * @param {string} name - The raw professor name
  * @returns {object} - Object containing firstName, lastName, and fullName
@@ -25,7 +24,7 @@ function standardizeNameFormat(name) {
     lastName = parts[0];
     firstName = parts[1];
   } 
-  // Handle "F. Lastname" format (like "J. Rodriguez")
+  // Handle "F. Lastname" format
   else if (name.includes('.')) {
     const parts = name.split('.');
     firstName = parts[0].trim(); // This will be just the initial

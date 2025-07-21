@@ -1,4 +1,4 @@
-// extractors.js - Functions to extract professor names from various HTML structures
+// extractors.js - Functions to extract professor names from HTML structures
 
 /**
  * Extracts professor names from spans with class "result__flex--9 text--right"
