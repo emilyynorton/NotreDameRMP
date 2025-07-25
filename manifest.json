@@ -10,14 +10,16 @@
       "128": "icons/nd128t.png"
     },
     "description": "Displays Rate My Professors ratings within Notre Dame's PATH class search page.",
-    "permissions": ["scripting", "activeTab", "tabs", "storage"],
+    "permissions": ["storage"],
     "host_permissions": [
       "https://www.ratemyprofessors.com/*",
-      "https://ratemyprofessors.com/*"
+      "https://ratemyprofessors.com/*",
+      "https://classsearch.nd.edu/*",
+      "https://path.nd.edu/*"
     ],
     "content_scripts": [
       {
-        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*", "https://bxeregprod.oit.nd.edu/*"],
+        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*"],
         "js": ["content-bundle.js"],
         "css": ["styles.css"]
       }
@@ -25,7 +27,7 @@
     "web_accessible_resources": [
       {
         "resources": ["utils/*"],
-        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*", "https://bxeregprod.oit.nd.edu/*"]
+        "matches": ["https://path.nd.edu/*", "https://classsearch.nd.edu/*"]
       }
     ],
     "background": {

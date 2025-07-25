@@ -370,14 +370,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         chrome.storage.local.set({ 'ndProfessors': professorData }, () => {});
         
-        // Send message back to content script
-        chrome.tabs.query({active: true, currentWindow: true}, tabs => {
-          if (tabs.length > 0) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              action: 'professorsProcessed',
-              professors: professorData
-            });
-          }
+        // Send message back to content script using runtime messaging
+        // This broadcasts to all content scripts - each will check if the data is relevant
+        chrome.runtime.sendMessage({
+          action: 'professorsProcessed',
+          professors: professorData
         });
       })
       .catch(error => {
