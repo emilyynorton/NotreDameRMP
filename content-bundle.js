@@ -344,7 +344,28 @@ const observer = new MutationObserver((mutations) => {
       }
     }
   } catch (error) {
-    console.error('Error in MutationObserver:', error);
+    // more graceful error handling
+    // Filter out errors
+    const isError = 
+      error.message && (
+        error.message.includes('Extension context invalidated') ||
+        error.message.includes('Receiving end does not exist') ||
+        error.message.includes('The message port closed before')
+      );
+      
+    // log errors in DOM changes
+    if (!isError) {
+      console.error('Error in MutationObserver:', error);
+    }
+    
+    // Stop observing if extension context is invalidated
+    if (error.message && error.message.includes('Extension context invalidated')) {
+      try {
+        observer.disconnect();
+      } catch (e) {
+        // Silent catch if observer is already disconnected
+      }
+    }
   }
 });
 
@@ -1362,16 +1383,36 @@ function handleProfessorHover(event) {
       }
     });
     } catch (error) {
-      // Handle extension context invalidated errors
-      console.error('Extension error:', error);
+      // Filter out expected errors
+      const isExpectedError = 
+        error.message && (
+          error.message.includes('Extension context invalidated') ||
+          error.message.includes('Receiving end does not exist') ||
+          error.message.includes('The message port closed before')
+        );
+        
+      // Only log unexpected errors
+      if (!isExpectedError) {
+        console.error('Extension error:', error);
+      }
+      
+      // Always show user-friendly error in tooltip
+      // This maintains the tooltip functionality even when errors occur
       const errorContent = `
         <div class="tooltip-header" style="margin-bottom:8px;">
           <h3 style="margin:0; color:#d54741;">Error</h3>
           <p>Unable to look up professor. Please refresh the page and try again.</p>
         </div>
       `;
-      // Update tooltip content and reposition
-      updateTooltipContent(tooltip, errorContent, element);
+      
+      // Only update tooltip if it exists
+      if (tooltip && element) {
+        try {
+          updateTooltipContent(tooltip, errorContent, element);
+        } catch (e) {
+          // Silent catch if tooltip update fails
+        }
+      }
     }
   }
   
